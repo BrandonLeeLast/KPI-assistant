@@ -298,9 +298,11 @@ class KPIDashboardApp(ctk.CTk):
                 if not dl_url:
                     messagebox.showerror("Update Error", "No download URL in version manifest.")
                     return
+                from app.ui.update_dialog import UpdateProgressWindow
+                progress = UpdateProgressWindow(self)
                 threading.Thread(
                     target=updater.perform_update,
-                    args=(dl_url, self.log_message),
+                    args=(dl_url, self.log_message, progress),
                     daemon=True,
                 ).start()
         self.after(0, _prompt)

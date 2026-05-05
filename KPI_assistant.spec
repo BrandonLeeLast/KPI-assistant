@@ -26,6 +26,7 @@ a = Analysis(
         'app.ui.widgets',
         'app.ui.context_dialog',
         'app.ui.capture_overlay',
+        'app.ui.update_dialog',
         'app.screenshot',
         'pynput',
         'pynput.keyboard',

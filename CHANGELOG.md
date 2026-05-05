@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.6
+- Added update progress bar window showing download percentage and install stages
+- Fixed update hanging after download — progress window now uses CTkToplevel on the main thread instead of a second CTk root (which deadlocked on background threads)
+
 ## v1.0.5
 - Added built-in screenshot capture tool with global hotkey (default: Ctrl+Shift+S)
 - Fullscreen dark overlay with drag-to-select region and live W×H size indicator
