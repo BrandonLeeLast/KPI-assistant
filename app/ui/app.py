@@ -335,18 +335,24 @@ class KPIDashboardApp(ctk.CTk):
                 "Update Available",
                 f"KPI Assistant v{new_ver} is ready (you have v{updater.LOCAL_VERSION}).\n\n"
                 f"{notes}\n\n"
-                f"Download now? The new EXE will be saved to your Desktop.\n"
-                f"Close this app and run it to update."
+                f"Install now? The app will close, update, and relaunch automatically."
             ):
                 dl_url = remote_info.get("download_url", "")
                 if not dl_url:
                     messagebox.showerror("Update Error", "No download URL in version manifest.")
                     return
+
                 from app.ui.update_dialog import UpdateProgressWindow
                 progress = UpdateProgressWindow(self)
+
+                # on_ready runs on main thread after download — triggers clean shutdown
+                def on_ready():
+                    self.after(0, lambda: updater.launch_swap_and_exit(self))
+
                 threading.Thread(
                     target=updater.perform_update,
                     args=(dl_url, new_ver, self.log_message, progress),
+                    kwargs={"on_ready": on_ready},
                     daemon=True,
                 ).start()
         self.after(0, _prompt)

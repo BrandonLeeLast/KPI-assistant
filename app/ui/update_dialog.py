@@ -88,26 +88,9 @@ class UpdateProgressWindow:
         value = max(0.0, min(1.0, value))
         self._parent.after(0, lambda: self._do_set_progress(value))
 
-    def finish(self, message: str = "Ready!") -> None:
+    def finish(self, message: str = "Applying update…") -> None:
         self.set_progress(1.0)
-        self.set_step("Update downloaded!", message)
-        # Show a close button so the user can dismiss the window
-        self._parent.after(0, self._show_close_btn)
-
-    def _show_close_btn(self) -> None:
-        try:
-            import customtkinter as ctk
-            from app.constants import GREEN, HEADER_BG
-            ctk.CTkButton(
-                self._win, text="OK — Close this window",
-                fg_color=GREEN, hover_color="#8ecf8a", text_color=HEADER_BG,
-                font=ctk.CTkFont("Segoe UI", 11, weight="bold"),
-                corner_radius=8, height=34,
-                command=self._win.destroy,
-            ).pack(fill="x", padx=24, pady=(0, 14))
-            self._win.update()
-        except Exception:
-            pass
+        self.set_step("Installing update…", message)
 
     # ── Internal (main thread only) ───────────────────────────────────────────
     def _do_set_step(self, title: str, subtitle: str) -> None:

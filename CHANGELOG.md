@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.15
+- Complete updater rewrite using PowerShell PID-wait swap approach
+- New EXE downloaded to %APPDATA%/KPI-assistant/update/ (never touches running EXE)
+- Watchdog, hotkey listener and tray stopped before exit so zero lingering file handles
+- PowerShell stub waits for PID to fully disappear from process list then does atomic rename
+- Falls back to copy+delete if cross-volume rename fails (antivirus edge case)
+- Clean sys.exit(0) instead of os.kill or os._exit — proper Python/CTk teardown
+- App relaunches automatically after swap completes
+
 ## v1.0.14
 - Fixed config tab section headers taking up too much vertical space — now fixed 24px height
 - Fixed mouse wheel scroll not working on config tab — binds to all child widgets after build
