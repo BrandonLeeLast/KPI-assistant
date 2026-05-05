@@ -46,23 +46,42 @@ def build(parent: ctk.CTkFrame, app) -> None:
     )
     scroll.pack(fill="both", expand=True, padx=20, pady=12)
 
+    # ── Fix mouse wheel scrolling on Windows ──────────────────────────────────
+    def _on_mousewheel(event):
+        scroll._parent_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def _bind_mousewheel(widget):
+        widget.bind("<MouseWheel>", _on_mousewheel)
+        for child in widget.winfo_children():
+            _bind_mousewheel(child)
+
+    # Re-bind after each widget is added
+    def _rebind(*_):
+        _bind_mousewheel(scroll)
+
+    scroll.bind("<Configure>", _rebind)
+    scroll.bind("<MouseWheel>", _on_mousewheel)
+
     # ── Helpers ───────────────────────────────────────────────────────────────
     def section(text: str, color: str = MAUVE) -> None:
-        f = ctk.CTkFrame(scroll, fg_color="transparent")
-        f.pack(fill="x", pady=(10, 4))
-        ctk.CTkFrame(f, fg_color=color, width=3, corner_radius=2).pack(side="left", fill="y", padx=(0, 8))
-        ctk.CTkLabel(f, text=text, text_color=color,
+        # Single-line row: coloured left pip + bold label, fixed height, no expansion
+        row = ctk.CTkFrame(scroll, fg_color="transparent", height=24)
+        row.pack(fill="x", pady=(10, 3))
+        row.pack_propagate(False)
+        pip = ctk.CTkFrame(row, fg_color=color, width=3, height=16, corner_radius=2)
+        pip.place(x=0, y=4)
+        ctk.CTkLabel(row, text=text, text_color=color,
                      font=ctk.CTkFont("Segoe UI", 11, weight="bold"),
-                     anchor="w").pack(side="left")
+                     anchor="w").place(x=11, y=2)
 
     def hint(text: str) -> None:
         ctk.CTkLabel(scroll, text=text, text_color=OVERLAY,
                      font=ctk.CTkFont("Segoe UI", 10),
-                     anchor="w", justify="left").pack(fill="x", pady=(0, 3))
+                     anchor="w", justify="left").pack(fill="x", pady=(0, 2))
 
     def divider() -> None:
         ctk.CTkFrame(scroll, fg_color=SURFACE, height=1,
-                     corner_radius=0).pack(fill="x", pady=(6, 0))
+                     corner_radius=0).pack(fill="x", pady=(8, 0))
 
     def entry(var, show=None, placeholder="") -> ctk.CTkEntry:
         e = ctk.CTkEntry(

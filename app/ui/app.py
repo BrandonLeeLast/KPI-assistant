@@ -334,7 +334,9 @@ class KPIDashboardApp(ctk.CTk):
             if messagebox.askyesno(
                 "Update Available",
                 f"KPI Assistant v{new_ver} is ready (you have v{updater.LOCAL_VERSION}).\n\n"
-                f"{notes}\n\nInstall now? (App will restart automatically.)"
+                f"{notes}\n\n"
+                f"Download now? The new EXE will be saved to your Desktop.\n"
+                f"Close this app and run it to update."
             ):
                 dl_url = remote_info.get("download_url", "")
                 if not dl_url:
@@ -344,7 +346,7 @@ class KPIDashboardApp(ctk.CTk):
                 progress = UpdateProgressWindow(self)
                 threading.Thread(
                     target=updater.perform_update,
-                    args=(dl_url, self.log_message, progress),
+                    args=(dl_url, new_ver, self.log_message, progress),
                     daemon=True,
                 ).start()
         self.after(0, _prompt)
