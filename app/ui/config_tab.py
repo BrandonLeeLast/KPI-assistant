@@ -1,6 +1,41 @@
 import customtkinter as ctk
 from app.constants import (BG, SURFACE, SURFACE2, TEXT, SUBTEXT,
-                            MAUVE, LAVENDER, GREEN, OVERLAY, HEADER_BG)
+                            MAUVE, LAVENDER, GREEN, RED, OVERLAY, HEADER_BG)
+
+
+# ── Hotkey recorder helpers ───────────────────────────────────────────────────
+def _get_root(widget):
+    """Walk up to the Tk root window."""
+    w = widget
+    while w.master:
+        w = w.master
+    return w
+
+
+def _tk_key_to_str(event) -> str | None:
+    """Convert a Tkinter KeyPress event to a pynput-friendly key name."""
+    MODIFIER_MAP = {
+        "Control_L": "ctrl", "Control_R": "ctrl",
+        "Shift_L":   "shift", "Shift_R":  "shift",
+        "Alt_L":     "alt",   "Alt_R":    "alt",
+        "Super_L":   "win",   "Super_R":  "win",
+    }
+    sym = event.keysym
+    if sym in MODIFIER_MAP:
+        return MODIFIER_MAP[sym]
+    if sym.startswith("F") and sym[1:].isdigit():
+        return sym          # F1–F12
+    if len(sym) == 1:
+        return sym.lower()  # regular character
+    return None
+
+
+def _build_combo(keys: set) -> str:
+    """Order: ctrl → shift → alt → regular key."""
+    ORDER = ["ctrl", "shift", "alt", "win"]
+    mods  = [k for k in ORDER if k in keys]
+    rest  = [k for k in keys  if k not in ORDER]
+    return "+".join(mods + sorted(rest))
 
 
 def build(parent: ctk.CTkFrame, app) -> None:
@@ -106,29 +141,75 @@ def build(parent: ctk.CTkFrame, app) -> None:
     # ── Screenshot Hotkey ─────────────────────────────────────────────────────
     section_label("SCREENSHOT HOTKEY")
     ctk.CTkLabel(scroll,
-                 text="Global shortcut to open the built-in capture tool. Works even when minimised to tray.\n"
-                      "Format: ctrl+shift+s   ctrl+F9   alt+F2",
+                 text="Click 'Record' then press your desired key combination. Works system-wide.",
                  text_color=OVERLAY, font=ctk.CTkFont("Segoe UI", 10),
-                 justify="left", anchor="w").pack(fill="x", pady=(0, 6))
+                 anchor="w").pack(fill="x", pady=(0, 8))
 
     hotkey_row = ctk.CTkFrame(scroll, fg_color="transparent")
     hotkey_row.pack(fill="x", pady=(0, 4))
 
-    text_entry_hotkey = ctk.CTkEntry(
-        hotkey_row, textvariable=app.hotkey_var,
-        fg_color=SURFACE, border_color=SURFACE2,
-        text_color=TEXT, placeholder_text_color=SUBTEXT,
-        font=ctk.CTkFont("Segoe UI", 12),
-        corner_radius=8, height=38, border_width=1,
+    # Display label showing current hotkey
+    hotkey_display = ctk.CTkLabel(
+        hotkey_row,
+        textvariable=app.hotkey_var,
+        fg_color=SURFACE, text_color=MAUVE,
+        font=ctk.CTkFont("Segoe UI", 13, weight="bold"),
+        corner_radius=8, padx=16, pady=8,
+        anchor="center",
     )
-    text_entry_hotkey.pack(side="left", fill="x", expand=True, padx=(0, 8))
+    hotkey_display.pack(side="left", fill="x", expand=True, padx=(0, 8))
+
+    record_btn = ctk.CTkButton(
+        hotkey_row, text="⏺  Record", width=110, height=38,
+        fg_color=SURFACE2, hover_color="#585b70", text_color=TEXT,
+        font=ctk.CTkFont("Segoe UI", 11, weight="bold"), corner_radius=8,
+    )
+    record_btn.pack(side="left", padx=(0, 8))
 
     ctk.CTkButton(
         hotkey_row, text="Apply", width=80, height=38,
         fg_color=MAUVE, hover_color="#b09de8", text_color=HEADER_BG,
         font=ctk.CTkFont("Segoe UI", 11, weight="bold"), corner_radius=8,
         command=app.apply_hotkey,
-    ).pack(side="right")
+    ).pack(side="left")
+
+    # ── Recorder logic ────────────────────────────────────────────────────────
+    _recording   = [False]
+    _held_keys   = set()
+
+    def _start_recording():
+        _recording[0] = True
+        _held_keys.clear()
+        record_btn.configure(text="⏹  Press keys…", fg_color=RED, hover_color=RED)
+        app.hotkey_var.set("…")
+        # Temporarily bind key events to the scroll frame's root window
+        _get_root(scroll).bind("<KeyPress>",   _on_key_press,   add="+")
+        _get_root(scroll).bind("<KeyRelease>", _on_key_release, add="+")
+
+    def _stop_recording():
+        _recording[0] = False
+        record_btn.configure(text="⏺  Record", fg_color=SURFACE2, hover_color="#585b70")
+        _get_root(scroll).unbind("<KeyPress>")
+        _get_root(scroll).unbind("<KeyRelease>")
+
+    def _on_key_press(event):
+        if not _recording[0]:
+            return
+        key = _tk_key_to_str(event)
+        if key:
+            _held_keys.add(key)
+            combo = _build_combo(_held_keys)
+            app.hotkey_var.set(combo)
+
+    def _on_key_release(event):
+        if not _recording[0]:
+            return
+        key = _tk_key_to_str(event)
+        # Stop recording once any key is released — combo is locked in
+        if key and key not in ("ctrl", "shift", "alt"):
+            _stop_recording()
+
+    record_btn.configure(command=_start_recording)
 
     # ── Save ──────────────────────────────────────────────────────────────────
     ctk.CTkButton(

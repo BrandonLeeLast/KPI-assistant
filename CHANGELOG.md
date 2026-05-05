@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.9
+- Fixed installer hanging at 85% — background thread now returns after scheduling exit via after()
+- Fixed double context dialog on screenshot capture — overlay guard flag prevents concurrent overlays
+- Fixed Esc cancel not resetting overlay guard — cancel now signals app via on_captured(None)
+- Replaced hotkey text input with keyboard recorder — click Record then press your combination
+
 ## v1.0.8
 - Fixed update progress window hanging after download — removed grab_set() which was starving the Tk event loop
 - Fixed progress bar and labels never updating — set_step/set_progress now schedule via parent.after() instead of win.after()

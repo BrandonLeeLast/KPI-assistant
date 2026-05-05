@@ -185,8 +185,9 @@ start "" /b "{current_exe}"
 
     if progress:
         progress.finish("Restarting KPI Assistant…")
-        # Schedule exit on the main thread AFTER after() callbacks have rendered
+        # Exit is scheduled on the main thread — this background thread returns now
         progress._parent.after(2500, lambda: os._exit(0))
-    else:
-        time.sleep(2.5)
-        os._exit(0)
+        return  # ← background thread exits; main loop handles the rest
+
+    time.sleep(2.5)
+    os._exit(0)

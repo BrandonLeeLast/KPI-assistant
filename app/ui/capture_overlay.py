@@ -126,6 +126,8 @@ class CaptureOverlay:
     def _cancel(self):
         self._cancelled = True
         self._close_all()
+        if self._on_captured:
+            self._on_captured(None)  # signal cancellation so the guard flag resets
 
     def _close_all(self):
         for win, _, __ in self._windows:

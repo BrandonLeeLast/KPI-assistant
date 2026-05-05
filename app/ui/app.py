@@ -274,14 +274,19 @@ class KPIDashboardApp(ctk.CTk):
             self.log(f"❌ Invalid hotkey — {e}", "error")
 
     def _trigger_capture(self) -> None:
+        # Guard: ignore hotkey if an overlay is already open
+        if getattr(self, '_capture_active', False):
+            return
+        self._capture_active = True
         watch_folder = self.watch_folder_var.get()
         launch_overlay(watch_folder, self._on_screenshot_captured)
 
     def _on_screenshot_captured(self, filepath: str) -> None:
-        filename = os.path.basename(filepath)
-        self.log(f"📸 Screenshot captured: {filename}", "success")
-        # Watchdog will pick it up automatically — log it so the user sees it
-        self.increment_stat("queued")
+        self._capture_active = False
+        if filepath:
+            filename = os.path.basename(filepath)
+            self.log(f"📸 Screenshot captured: {filename}", "success")
+        # Watchdog picks up the file and shows the context dialog — don't duplicate here
 
     # ── AUTO-UPDATER ──────────────────────────────────────────────────────────
     def _on_update_available(self, remote_info: dict) -> None:
@@ -300,12 +305,11 @@ class KPIDashboardApp(ctk.CTk):
                     return
                 from app.ui.update_dialog import UpdateProgressWindow
                 progress = UpdateProgressWindow(self)
-                # Wait one event-loop tick so _build() fires before the thread starts
-                self.after(100, lambda: threading.Thread(
+                threading.Thread(
                     target=updater.perform_update,
                     args=(dl_url, self.log_message, progress),
                     daemon=True,
-                ).start())
+                ).start()
         self.after(0, _prompt)
 
     def manual_update_check(self) -> None:
