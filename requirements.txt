@@ -1,7 +1,9 @@
-google-generativeai
+google-genai
 watchdog
 pystray
 pillow
 pyautogui
 packaging
+customtkinter
+darkdetect
 pyinstaller

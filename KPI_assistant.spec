@@ -5,14 +5,27 @@ block_cipher = None
 
 a = Analysis(
     ['main.py'],
-    pathex=[],
+    pathex=['.'],
     binaries=[],
     datas=[
-        ('config.ini', '.'),
+        ('config.ini',   '.'),
         ('version.json', '.'),
     ],
     hiddenimports=[
-        'google.generativeai',
+        'app',
+        'app.config',
+        'app.constants',
+        'app.processor',
+        'app.watcher',
+        'app.tray',
+        'app.ui',
+        'app.ui.app',
+        'app.ui.dashboard',
+        'app.ui.config_tab',
+        'app.ui.widgets',
+        'customtkinter',
+        'darkdetect',
+        'google.genai',
         'watchdog.observers',
         'watchdog.observers.polling',
         'watchdog.events',
@@ -50,11 +63,11 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,      # No console window — silent tray app
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # icon='icon.ico',  # Uncomment and add icon.ico to enable custom taskbar icon
+    # icon='icon.ico',
 )
