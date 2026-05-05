@@ -215,9 +215,10 @@ def launch_swap_and_exit(app) -> None:
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
     )
 
-    # Clean exit — lets Python/CTk/pystray teardown flush all handles
+    # destroy() flushes CTk/tkinter — then os._exit(0) guarantees the process
+    # dies immediately so the PS1 stub's PID-wait loop exits cleanly
     try:
         app.destroy()
     except Exception:
         pass
-    sys.exit(0)
+    os._exit(0)

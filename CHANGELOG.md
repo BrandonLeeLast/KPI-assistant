@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.16
+- Fixed update progress window not closable — X button now shows cancel confirmation during download, closes cleanly after
+- Fixed process not dying after update — app.destroy() + os._exit(0) guarantees process terminates so PS1 stub PID-wait exits correctly
+
 ## v1.0.15
 - Complete updater rewrite using PowerShell PID-wait swap approach
 - New EXE downloaded to %APPDATA%/KPI-assistant/update/ (never touches running EXE)

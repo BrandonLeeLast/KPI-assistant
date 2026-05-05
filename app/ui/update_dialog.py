@@ -26,7 +26,7 @@ class UpdateProgressWindow:
         win.resizable(False, False)
         win.configure(fg_color=BG)
         win.attributes("-topmost", True)
-        win.protocol("WM_DELETE_WINDOW", lambda: None)  # prevent user closing
+        win.protocol("WM_DELETE_WINDOW", self._on_close)
 
         win.update_idletasks()
         x = (win.winfo_screenwidth()  - 440) // 2
@@ -89,8 +89,31 @@ class UpdateProgressWindow:
         self._parent.after(0, lambda: self._do_set_progress(value))
 
     def finish(self, message: str = "Applying update…") -> None:
+        self._cancelled = True  # download done — X button now harmless
         self.set_progress(1.0)
         self.set_step("Installing update…", message)
+
+    def _on_close(self) -> None:
+        """X button — only allow closing if download isn't in flight."""
+        if getattr(self, '_cancelled', False):
+            # Download complete, app is about to exit anyway — just hide
+            try:
+                self._win.destroy()
+            except Exception:
+                pass
+        else:
+            # Download in progress — ask before cancelling
+            from tkinter import messagebox
+            if messagebox.askyesno(
+                "Cancel Update?",
+                "Download is in progress. Cancel the update?",
+                parent=self._win,
+            ):
+                self._cancelled = True
+                try:
+                    self._win.destroy()
+                except Exception:
+                    pass
 
     # ── Internal (main thread only) ───────────────────────────────────────────
     def _do_set_step(self, title: str, subtitle: str) -> None:
