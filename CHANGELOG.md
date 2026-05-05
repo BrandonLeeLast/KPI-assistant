@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.5
+- Added built-in screenshot capture tool with global hotkey (default: Ctrl+Shift+S)
+- Fullscreen dark overlay with drag-to-select region and live W×H size indicator
+- Screenshot hotkey customisable from Configuration tab — applies without restart
+- Non-intrusive tray balloon notification when image fails to process
+- Fixed version label always showing v0.0.0 in bundled EXE — now reads from sys._MEIPASS
+- Fixed update check incorrectly triggering on every launch due to stale version read
+
 ## v1.0.4
 - Fixed version label always showing v0.0.0 — now reads correctly from sys._MEIPASS when bundled
 - Fixed update check incorrectly triggering on every launch due to stale version read

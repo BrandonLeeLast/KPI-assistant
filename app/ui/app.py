@@ -13,6 +13,8 @@ from app.constants import (BG, BG2, SURFACE, SURFACE2, OVERLAY,
 from app.processor import process_file, is_already_processed
 from app.watcher import WatcherDaemon
 from app.tray import create_tray_icon
+from app.screenshot import HotkeyListener
+from app.ui.capture_overlay import launch_overlay
 from app.ui.widgets import PulseIndicator
 from app.ui import dashboard as dashboard_builder
 from app.ui import config_tab as config_tab_builder
@@ -31,10 +33,11 @@ class KPIDashboardApp(ctk.CTk):
         self.minsize(780, 560)
         self.configure(fg_color=BG)
 
-        self.config_data = load_config()
-        self.watcher     = WatcherDaemon(self)
-        self.tray_icon   = None
-        self._stats      = {"queued": 0, "filed": 0, "errors": 0}
+        self.config_data    = load_config()
+        self.watcher        = WatcherDaemon(self)
+        self.tray_icon      = None
+        self._stats         = {"queued": 0, "filed": 0, "errors": 0}
+        self._hotkey        = HotkeyListener()
 
         self.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
 
@@ -43,11 +46,13 @@ class KPIDashboardApp(ctk.CTk):
         self.level_var           = tk.StringVar(value=self.config_data['DEFAULT']['MY_LEVEL'])
         self.watch_folder_var    = tk.StringVar(value=self.config_data['DEFAULT']['WATCH_FOLDER'])
         self.evidence_folder_var = tk.StringVar(value=self.config_data['DEFAULT']['BASE_KPI_FOLDER'])
+        self.hotkey_var          = tk.StringVar(value=self.config_data['DEFAULT'].get('HOTKEY', 'ctrl+shift+s'))
 
         self._build_topbar()
         self._build_tabs()
         self._setup_tray()
         self.start_service()
+        self.apply_hotkey()
         updater.check_for_update(self._on_update_available)
 
     # ── TOPBAR ────────────────────────────────────────────────────────────────
@@ -138,6 +143,7 @@ class KPIDashboardApp(ctk.CTk):
         self.after(0, self.deiconify)
 
     def exit_completely(self, *_) -> None:
+        self._hotkey.stop()
         self.stop_service()
         self.tray_icon.stop()
         self.destroy()
@@ -152,6 +158,14 @@ class KPIDashboardApp(ctk.CTk):
             self.log_text.see(tk.END)
             self.log_text.config(state="disabled")
         self.after(0, _append)
+
+    def notify(self, message: str, title: str = "KPI Assistant") -> None:
+        """Non-intrusive tray balloon notification — fires from any thread."""
+        if self.tray_icon:
+            try:
+                self.tray_icon.notify(message, title)
+            except Exception:
+                pass
 
     def log_message(self, text: str) -> None:
         level = ("success" if "✅" in text
@@ -238,12 +252,36 @@ class KPIDashboardApp(ctk.CTk):
         self.config_data['DEFAULT']['LOG_FILE'] = os.path.join(
             APPDATA_DIR, 'processed_log.json').replace('\\', '/')
 
+        self.config_data['DEFAULT']['HOTKEY'] = self.hotkey_var.get()
+
         save_config(self.config_data)
         self.log("💾 Configuration saved.", "success")
+        self.apply_hotkey()
 
         if self.watcher.running:
             self.stop_service()
         self.start_service()
+
+    # ── SCREENSHOT HOTKEY ─────────────────────────────────────────────────────
+    def apply_hotkey(self) -> None:
+        hotkey = self.hotkey_var.get().strip()
+        if not hotkey:
+            return
+        try:
+            self._hotkey.start(hotkey, self._trigger_capture)
+            self.log(f"⌨️  Screenshot hotkey active: {hotkey}", "success")
+        except ValueError as e:
+            self.log(f"❌ Invalid hotkey — {e}", "error")
+
+    def _trigger_capture(self) -> None:
+        watch_folder = self.watch_folder_var.get()
+        launch_overlay(watch_folder, self._on_screenshot_captured)
+
+    def _on_screenshot_captured(self, filepath: str) -> None:
+        filename = os.path.basename(filepath)
+        self.log(f"📸 Screenshot captured: {filename}", "success")
+        # Watchdog will pick it up automatically — log it so the user sees it
+        self.increment_stat("queued")
 
     # ── AUTO-UPDATER ──────────────────────────────────────────────────────────
     def _on_update_available(self, remote_info: dict) -> None:

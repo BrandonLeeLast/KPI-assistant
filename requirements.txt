@@ -1,4 +1,6 @@
 google-genai
+pynput
+mss
 watchdog
 pystray
 pillow

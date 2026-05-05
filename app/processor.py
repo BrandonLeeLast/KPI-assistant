@@ -38,6 +38,7 @@ def process_file(file_path: str, settings, ui) -> None:
     except Exception as e:
         ui.log(f"❌ Analysis error: {e}", "error")
         ui.increment_stat("errors")
+        ui.notify(f"Failed to process {filename}", "KPI Assistant")
 
 
 def _classify_and_file(file_path: str, filename: str, user_context: str, settings, ui) -> str:

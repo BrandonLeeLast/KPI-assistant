@@ -24,6 +24,7 @@ def get_default_config() -> configparser.ConfigParser:
         'BASE_KPI_FOLDER': os.path.join(os.path.expanduser('~'), 'Documents', 'KPI_Evidence').replace('\\', '/'),
         # Log lives in APPDATA — never next to the EXE or in Documents
         'LOG_FILE':        os.path.join(APPDATA_DIR, 'processed_log.json').replace('\\', '/'),
+        'HOTKEY':          'ctrl+shift+s',
     }
     return cfg
 
