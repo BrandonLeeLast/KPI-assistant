@@ -184,4 +184,4 @@ start "" /b "{current_exe}"
     if progress:
         progress.finish("Restarting KPI Assistant…")
     time.sleep(2.5)
-    os.kill(os.getpid(), 9)
+    os._exit(0)

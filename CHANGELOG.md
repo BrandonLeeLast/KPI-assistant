@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.7
+- Fixed update process leaving old instance alive after install — replaced os.kill(pid, 9) with os._exit(0) (signal 9 is not SIGKILL on Windows)
+
 ## v1.0.6
 - Added update progress bar window showing download percentage and install stages
 - Fixed update hanging after download — progress window now uses CTkToplevel on the main thread instead of a second CTk root (which deadlocked on background threads)
