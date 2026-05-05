@@ -46,21 +46,9 @@ def build(parent: ctk.CTkFrame, app) -> None:
     )
     scroll.pack(fill="both", expand=True, padx=20, pady=12)
 
-    # ── Fix mouse wheel scrolling on Windows ──────────────────────────────────
+    # Mousewheel fix applied AFTER build — see bottom of this function
     def _on_mousewheel(event):
-        scroll._parent_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
-    def _bind_mousewheel(widget):
-        widget.bind("<MouseWheel>", _on_mousewheel)
-        for child in widget.winfo_children():
-            _bind_mousewheel(child)
-
-    # Re-bind after each widget is added
-    def _rebind(*_):
-        _bind_mousewheel(scroll)
-
-    scroll.bind("<Configure>", _rebind)
-    scroll.bind("<MouseWheel>", _on_mousewheel)
+        scroll._parent_canvas.yview_scroll(int(-3 * (event.delta / 120)), "units")
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     def section(text: str, color: str = MAUVE) -> None:
@@ -376,3 +364,12 @@ def build(parent: ctk.CTkFrame, app) -> None:
         corner_radius=8, height=38,
         command=app.save_settings,
     ).pack(fill="x", pady=(6, 8))
+
+    # ── Bind mousewheel to every widget in the scroll frame ───────────────────
+    # Must run after all widgets are packed so winfo_children() is complete.
+    def _bind_all_mousewheel(widget):
+        widget.bind("<MouseWheel>", _on_mousewheel, add="+")
+        for child in widget.winfo_children():
+            _bind_all_mousewheel(child)
+
+    scroll.after(100, lambda: _bind_all_mousewheel(scroll))

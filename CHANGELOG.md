@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.14
+- Fixed config tab section headers taking up too much vertical space — now fixed 24px height
+- Fixed mouse wheel scroll not working on config tab — binds to all child widgets after build
+- Fixed scroll speed too slow — increased from 1 to 3 units per wheel tick
+
 ## v1.0.13
 - Completely replaced hot-swap updater with simple desktop download — no more bat scripts, no file locking, no process killing
 - Update now downloads new EXE to Desktop as KPI_Assistant_v{version}.exe, opens Desktop in Explorer, and shows "close and run" instructions
