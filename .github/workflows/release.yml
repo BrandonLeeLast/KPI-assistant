@@ -1,0 +1,86 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write   # needed to create GitHub Releases and upload assets
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      # ── Checkout ───────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so we can tag correctly
+
+      # ── Python ─────────────────────────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"   # 3.11 has the best PyInstaller Windows support
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # ── Read version from version.json ─────────────────────────────────────
+      - name: Read version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = (Get-Content version.json | ConvertFrom-Json).version
+          echo "VERSION=$v" >> $env:GITHUB_OUTPUT
+          echo "TAG=v$v"    >> $env:GITHUB_OUTPUT
+
+      # ── Build EXE ──────────────────────────────────────────────────────────
+      - name: Build standalone EXE
+        run: pyinstaller KPI_assistant.spec
+
+      # ── Verify artefact ────────────────────────────────────────────────────
+      - name: Verify EXE exists
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist\KPI_Assistant.exe")) {
+            Write-Error "Build failed — dist\KPI_Assistant.exe not found"
+            exit 1
+          }
+          $size = (Get-Item "dist\KPI_Assistant.exe").length / 1MB
+          Write-Output "EXE size: $([math]::Round($size,1)) MB"
+
+      # ── Update version.json download_url to point at this release ──────────
+      - name: Patch download_url in version.json
+        shell: pwsh
+        run: |
+          $json = Get-Content version.json | ConvertFrom-Json
+          $repo = "${{ github.repository }}"
+          $tag  = "${{ steps.ver.outputs.TAG }}"
+          $json.download_url = "https://github.com/$repo/releases/download/$tag/KPI_Assistant.exe"
+          $json | ConvertTo-Json | Set-Content version.json -Encoding utf8
+
+      # ── Create / update the GitHub Release and upload the EXE ──────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.TAG }}
+          name: "KPI Assistant ${{ steps.ver.outputs.TAG }}"
+          body_path: CHANGELOG.md
+          fail_on_unmatched_files: false
+          files: dist/KPI_Assistant.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Commit the patched version.json back so the download_url is live ───
+      - name: Commit updated version.json
+        shell: pwsh
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.json
+          # Only commit if there's actually a change
+          git diff --cached --quiet || git commit -m "ci: update download_url for ${{ steps.ver.outputs.TAG }} [skip ci]"
+          git push

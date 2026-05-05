@@ -1,0 +1,7 @@
+google-generativeai
+watchdog
+pystray
+pillow
+pyautogui
+packaging
+pyinstaller
