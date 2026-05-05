@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.1.0
+- Multi-provider AI support: Gemini, Claude (Anthropic), OpenAI GPT, Ollama (local)
+- Model name is now fully editable — use any model the provider supports
+- API key field with show/hide toggle per provider
+- Auto-fills default model when switching provider
+- Full configuration overhaul — 6 sections: AI Provider, Developer Level, Folders, Capture, Processing, Notifications
+- KPA categories are now editable — customise or extend the list
+- Custom AI prompt field — append your own instructions to the base prompt
+- Auto-process toggle — disable to only process via manual Scan Backlog
+- Notification toggles — independently control success and failure tray alerts
+- Removed all ShareX branding — tool is capture-agnostic
+- Added "Show context window" toggle — disable to send screenshots straight to AI with no prompt
+- Added independent notification toggles for success and failure events
+
 ## v1.0.9
 - Fixed installer hanging at 85% — background thread now returns after scheduling exit via after()
 - Fixed double context dialog on screenshot capture — overlay guard flag prevents concurrent overlays

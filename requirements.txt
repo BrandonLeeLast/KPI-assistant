@@ -1,4 +1,6 @@
 google-genai
+anthropic
+openai
 pynput
 mss
 watchdog

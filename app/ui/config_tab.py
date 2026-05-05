@@ -1,66 +1,74 @@
 import customtkinter as ctk
+import tkinter as tk
 from app.constants import (BG, SURFACE, SURFACE2, TEXT, SUBTEXT,
-                            MAUVE, LAVENDER, GREEN, RED, OVERLAY, HEADER_BG)
+                            MAUVE, GREEN, RED, TEAL, BLUE, YELLOW, OVERLAY, HEADER_BG)
+from app.ai_provider import PROVIDERS, DEFAULT_MODELS
 
 
 # ── Hotkey recorder helpers ───────────────────────────────────────────────────
 def _get_root(widget):
-    """Walk up to the Tk root window."""
     w = widget
     while w.master:
         w = w.master
     return w
 
-
 def _tk_key_to_str(event) -> str | None:
-    """Convert a Tkinter KeyPress event to a pynput-friendly key name."""
     MODIFIER_MAP = {
         "Control_L": "ctrl", "Control_R": "ctrl",
-        "Shift_L":   "shift", "Shift_R":  "shift",
-        "Alt_L":     "alt",   "Alt_R":    "alt",
-        "Super_L":   "win",   "Super_R":  "win",
+        "Shift_L": "shift",  "Shift_R":  "shift",
+        "Alt_L": "alt",      "Alt_R":    "alt",
+        "Super_L": "win",    "Super_R":  "win",
     }
     sym = event.keysym
     if sym in MODIFIER_MAP:
         return MODIFIER_MAP[sym]
     if sym.startswith("F") and sym[1:].isdigit():
-        return sym          # F1–F12
+        return sym
     if len(sym) == 1:
-        return sym.lower()  # regular character
+        return sym.lower()
     return None
 
-
 def _build_combo(keys: set) -> str:
-    """Order: ctrl → shift → alt → regular key."""
     ORDER = ["ctrl", "shift", "alt", "win"]
     mods  = [k for k in ORDER if k in keys]
     rest  = [k for k in keys  if k not in ORDER]
     return "+".join(mods + sorted(rest))
 
 
+# ── Builder ───────────────────────────────────────────────────────────────────
 def build(parent: ctk.CTkFrame, app) -> None:
-    """Build the Configuration tab contents."""
 
-    # scrollable container so it works at any window height
-    scroll = ctk.CTkScrollableFrame(parent, fg_color="transparent",
-                                     scrollbar_button_color=SURFACE2,
-                                     scrollbar_button_hover_color=OVERLAY)
+    scroll = ctk.CTkScrollableFrame(
+        parent, fg_color="transparent",
+        scrollbar_button_color=SURFACE2,
+        scrollbar_button_hover_color=OVERLAY,
+    )
     scroll.pack(fill="both", expand=True, padx=20, pady=12)
 
-    def section_label(text: str) -> None:
-        ctk.CTkLabel(scroll, text=text, text_color=MAUVE,
-                     font=ctk.CTkFont("Segoe UI", 11, weight="bold"),
-                     anchor="w").pack(fill="x", pady=(18, 4))
+    # ── Helpers ───────────────────────────────────────────────────────────────
+    def section(text: str, color: str = MAUVE) -> None:
+        f = ctk.CTkFrame(scroll, fg_color="transparent")
+        f.pack(fill="x", pady=(20, 6))
+        ctk.CTkFrame(f, fg_color=color, width=3, corner_radius=2).pack(side="left", fill="y", padx=(0, 10))
+        ctk.CTkLabel(f, text=text, text_color=color,
+                     font=ctk.CTkFont("Segoe UI", 12, weight="bold"),
+                     anchor="w").pack(side="left")
+
+    def hint(text: str) -> None:
+        ctk.CTkLabel(scroll, text=text, text_color=OVERLAY,
+                     font=ctk.CTkFont("Segoe UI", 10),
+                     anchor="w", justify="left").pack(fill="x", pady=(0, 6))
 
     def divider() -> None:
         ctk.CTkFrame(scroll, fg_color=SURFACE, height=1,
-                     corner_radius=0).pack(fill="x", pady=(4, 0))
+                     corner_radius=0).pack(fill="x", pady=(8, 0))
 
-    def text_entry(var, show: str = None) -> ctk.CTkEntry:
+    def entry(var, show=None, placeholder="") -> ctk.CTkEntry:
         e = ctk.CTkEntry(
             scroll, textvariable=var,
             fg_color=SURFACE, border_color=SURFACE2,
-            text_color=TEXT, placeholder_text_color=SUBTEXT,
+            text_color=TEXT, placeholder_text=placeholder,
+            placeholder_text_color=OVERLAY,
             font=ctk.CTkFont("Segoe UI", 12),
             corner_radius=8, height=38, border_width=1,
         )
@@ -75,8 +83,7 @@ def build(parent: ctk.CTkFrame, app) -> None:
         ctk.CTkEntry(
             row, textvariable=var,
             fg_color=SURFACE, border_color=SURFACE2,
-            text_color=TEXT,
-            font=ctk.CTkFont("Segoe UI", 12),
+            text_color=TEXT, font=ctk.CTkFont("Segoe UI", 12),
             corner_radius=8, height=38, border_width=1,
         ).pack(side="left", fill="x", expand=True, padx=(0, 8))
         ctk.CTkButton(
@@ -86,78 +93,125 @@ def build(parent: ctk.CTkFrame, app) -> None:
             command=lambda: app.browse_folder(var),
         ).pack(side="right")
 
-    # ── API Key ───────────────────────────────────────────────────────────────
-    section_label("GEMINI API KEY")
-    text_entry(app.api_key_var, show="•")
-    ctk.CTkLabel(scroll,
-                 text="Used for screenshot classification. Get yours at aistudio.google.com",
-                 text_color=OVERLAY, font=ctk.CTkFont("Segoe UI", 10),
-                 anchor="w").pack(fill="x")
+    # ══════════════════════════════════════════════════════════════════════════
+    # 1. AI PROVIDER
+    # ══════════════════════════════════════════════════════════════════════════
+    section("🤖  AI PROVIDER", MAUVE)
+    hint("Choose which AI processes your screenshots. Each requires its own API key.")
+
+    provider_row = ctk.CTkFrame(scroll, fg_color="transparent")
+    provider_row.pack(fill="x", pady=(0, 8))
+
+    provider_var = app.provider_var
+    for name in PROVIDERS:
+        color  = {
+            "Gemini": MAUVE, "Claude": TEAL,
+            "OpenAI": GREEN, "Ollama": YELLOW,
+        }.get(name, SURFACE2)
+        rb = ctk.CTkRadioButton(
+            provider_row, text=name,
+            variable=provider_var, value=name,
+            fg_color=color, hover_color=color,
+            text_color=TEXT, font=ctk.CTkFont("Segoe UI", 11),
+        )
+        rb.pack(side="left", padx=(0, 20))
+
+    # Model field — auto-fills when provider changes
+    ctk.CTkLabel(scroll, text="Model", text_color=SUBTEXT,
+                 font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x")
+    entry(app.model_var, placeholder="e.g. gemini-2.0-flash / claude-opus-4-5 / gpt-4o")
+
+    # API Key
+    ctk.CTkLabel(scroll, text="API Key", text_color=SUBTEXT,
+                 font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(6, 0))
+
+    key_row = ctk.CTkFrame(scroll, fg_color="transparent")
+    key_row.pack(fill="x", pady=(0, 4))
+
+    key_entry = ctk.CTkEntry(
+        key_row, textvariable=app.api_key_var,
+        fg_color=SURFACE, border_color=SURFACE2,
+        text_color=TEXT, font=ctk.CTkFont("Segoe UI", 12),
+        corner_radius=8, height=38, border_width=1, show="•",
+    )
+    key_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
+
+    show_var = tk.BooleanVar(value=False)
+    def _toggle_show():
+        key_entry.configure(show="" if show_var.get() else "•")
+    ctk.CTkCheckBox(
+        key_row, text="Show", variable=show_var,
+        fg_color=MAUVE, hover_color="#b09de8", text_color=SUBTEXT,
+        font=ctk.CTkFont("Segoe UI", 10), command=_toggle_show, width=60,
+    ).pack(side="right")
+
+    # Ollama note
+    hint("For Ollama: leave API Key blank or enter your server URL (default: http://localhost:11434)")
+
+    # Auto-fill model when provider radio changes
+    def _on_provider_change(*_):
+        from app.ai_provider import DEFAULT_MODELS, PROVIDERS
+        key  = PROVIDERS.get(provider_var.get(), "gemini")
+        default = DEFAULT_MODELS.get(key, "")
+        if not app.model_var.get() or app.model_var.get() in DEFAULT_MODELS.values():
+            app.model_var.set(default)
+    provider_var.trace_add("write", _on_provider_change)
 
     divider()
 
-    # ── Developer Level ───────────────────────────────────────────────────────
-    section_label("DEVELOPER LEVEL")
-    ctk.CTkLabel(scroll, text="Sets the performance benchmark used in Gemini prompts.",
-                 text_color=OVERLAY, font=ctk.CTkFont("Segoe UI", 10),
-                 anchor="w").pack(fill="x", pady=(0, 8))
+    # ══════════════════════════════════════════════════════════════════════════
+    # 2. DEVELOPER LEVEL
+    # ══════════════════════════════════════════════════════════════════════════
+    section("🎯  DEVELOPER LEVEL", BLUE)
+    hint("Sets the performance benchmark referenced in AI prompts.")
 
-    seg = ctk.CTkSegmentedButton(
+    ctk.CTkSegmentedButton(
         scroll,
         values=["Junior", "Intermediate", "Senior", "Lead"],
         variable=app.level_var,
         fg_color=SURFACE,
-        selected_color=MAUVE,
-        selected_hover_color="#b09de8",
-        unselected_color=SURFACE,
-        unselected_hover_color=SURFACE2,
-        text_color=TEXT,
-        font=ctk.CTkFont("Segoe UI", 12),
-        corner_radius=8,
-        height=36,
-    )
-    seg.pack(fill="x")
+        selected_color=BLUE, selected_hover_color="#6fa8e8",
+        unselected_color=SURFACE, unselected_hover_color=SURFACE2,
+        text_color=TEXT, font=ctk.CTkFont("Segoe UI", 12),
+        corner_radius=8, height=36,
+    ).pack(fill="x")
 
     divider()
 
-    # ── Watch Folder ──────────────────────────────────────────────────────────
-    section_label("SHAREX WATCH FOLDER")
-    ctk.CTkLabel(scroll, text="ShareX should save screenshots directly into this folder.",
-                 text_color=OVERLAY, font=ctk.CTkFont("Segoe UI", 10),
-                 anchor="w").pack(fill="x", pady=(0, 6))
+    # ══════════════════════════════════════════════════════════════════════════
+    # 3. FOLDERS
+    # ══════════════════════════════════════════════════════════════════════════
+    section("📁  FOLDERS", TEAL)
+
+    ctk.CTkLabel(scroll, text="Screenshot Watch Folder", text_color=SUBTEXT,
+                 font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(0, 2))
+    hint("Screenshots saved here are automatically picked up and processed.")
     folder_row(app.watch_folder_var)
 
-    divider()
-
-    # ── Evidence Folder ───────────────────────────────────────────────────────
-    section_label("KPI EVIDENCE FOLDER")
-    ctk.CTkLabel(scroll, text="Classified screenshots are filed into subfolders here.",
-                 text_color=OVERLAY, font=ctk.CTkFont("Segoe UI", 10),
-                 anchor="w").pack(fill="x", pady=(0, 6))
+    ctk.CTkLabel(scroll, text="KPI Evidence Folder", text_color=SUBTEXT,
+                 font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(8, 2))
+    hint("Classified screenshots are organised into subfolders here.")
     folder_row(app.evidence_folder_var)
 
     divider()
 
-    # ── Screenshot Hotkey ─────────────────────────────────────────────────────
-    section_label("SCREENSHOT HOTKEY")
-    ctk.CTkLabel(scroll,
-                 text="Click 'Record' then press your desired key combination. Works system-wide.",
-                 text_color=OVERLAY, font=ctk.CTkFont("Segoe UI", 10),
-                 anchor="w").pack(fill="x", pady=(0, 8))
+    # ══════════════════════════════════════════════════════════════════════════
+    # 4. SCREENSHOT CAPTURE
+    # ══════════════════════════════════════════════════════════════════════════
+    section("📸  SCREENSHOT CAPTURE", GREEN)
+
+    ctk.CTkLabel(scroll, text="Global Hotkey", text_color=SUBTEXT,
+                 font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(0, 4))
 
     hotkey_row = ctk.CTkFrame(scroll, fg_color="transparent")
     hotkey_row.pack(fill="x", pady=(0, 4))
 
-    # Display label showing current hotkey
-    hotkey_display = ctk.CTkLabel(
-        hotkey_row,
-        textvariable=app.hotkey_var,
-        fg_color=SURFACE, text_color=MAUVE,
+    ctk.CTkLabel(
+        hotkey_row, textvariable=app.hotkey_var,
+        fg_color=SURFACE, text_color=GREEN,
         font=ctk.CTkFont("Segoe UI", 13, weight="bold"),
-        corner_radius=8, padx=16, pady=8,
-        anchor="center",
-    )
-    hotkey_display.pack(side="left", fill="x", expand=True, padx=(0, 8))
+        corner_radius=8, padx=16, pady=8, anchor="center",
+    ).pack(side="left", fill="x", expand=True, padx=(0, 8))
 
     record_btn = ctk.CTkButton(
         hotkey_row, text="⏺  Record", width=110, height=38,
@@ -165,24 +219,22 @@ def build(parent: ctk.CTkFrame, app) -> None:
         font=ctk.CTkFont("Segoe UI", 11, weight="bold"), corner_radius=8,
     )
     record_btn.pack(side="left", padx=(0, 8))
-
     ctk.CTkButton(
         hotkey_row, text="Apply", width=80, height=38,
-        fg_color=MAUVE, hover_color="#b09de8", text_color=HEADER_BG,
+        fg_color=GREEN, hover_color="#8ecf8a", text_color=HEADER_BG,
         font=ctk.CTkFont("Segoe UI", 11, weight="bold"), corner_radius=8,
         command=app.apply_hotkey,
     ).pack(side="left")
 
-    # ── Recorder logic ────────────────────────────────────────────────────────
-    _recording   = [False]
-    _held_keys   = set()
+    # Hotkey recorder logic
+    _recording = [False]
+    _held_keys  = set()
 
     def _start_recording():
         _recording[0] = True
         _held_keys.clear()
         record_btn.configure(text="⏹  Press keys…", fg_color=RED, hover_color=RED)
         app.hotkey_var.set("…")
-        # Temporarily bind key events to the scroll frame's root window
         _get_root(scroll).bind("<KeyPress>",   _on_key_press,   add="+")
         _get_root(scroll).bind("<KeyRelease>", _on_key_release, add="+")
 
@@ -198,24 +250,109 @@ def build(parent: ctk.CTkFrame, app) -> None:
         key = _tk_key_to_str(event)
         if key:
             _held_keys.add(key)
-            combo = _build_combo(_held_keys)
-            app.hotkey_var.set(combo)
+            app.hotkey_var.set(_build_combo(_held_keys))
 
     def _on_key_release(event):
         if not _recording[0]:
             return
         key = _tk_key_to_str(event)
-        # Stop recording once any key is released — combo is locked in
-        if key and key not in ("ctrl", "shift", "alt"):
+        if key and key not in ("ctrl", "shift", "alt", "win"):
             _stop_recording()
 
     record_btn.configure(command=_start_recording)
 
-    # ── Save ──────────────────────────────────────────────────────────────────
+    # Capture format
+    ctk.CTkLabel(scroll, text="Save Format", text_color=SUBTEXT,
+                 font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(10, 4))
+    ctk.CTkSegmentedButton(
+        scroll, values=["PNG", "JPG"],
+        variable=app.capture_format_var,
+        fg_color=SURFACE,
+        selected_color=GREEN, selected_hover_color="#8ecf8a",
+        unselected_color=SURFACE, unselected_hover_color=SURFACE2,
+        text_color=TEXT, font=ctk.CTkFont("Segoe UI", 11),
+        corner_radius=8, height=32, width=160,
+    ).pack(anchor="w")
+
+    divider()
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # 5. PROCESSING
+    # ══════════════════════════════════════════════════════════════════════════
+    section("⚙️  PROCESSING", YELLOW)
+
+    toggle_row2 = lambda label, var, color, h=None: (
+        [
+            r := ctk.CTkFrame(scroll, fg_color="transparent"),
+            r.pack(fill="x", pady=4),
+            ctk.CTkLabel(r, text=label, text_color=TEXT,
+                         font=ctk.CTkFont("Segoe UI", 11)).pack(side="left"),
+            ctk.CTkSwitch(r, text="", variable=var,
+                          fg_color=SURFACE2, progress_color=color,
+                          width=44).pack(side="right"),
+            ctk.CTkLabel(scroll, text=h, text_color=OVERLAY,
+                         font=ctk.CTkFont("Segoe UI", 10),
+                         anchor="w", justify="left").pack(fill="x") if h else None,
+        ]
+    )
+
+    toggle_row2(
+        "Auto-process on capture",
+        app.auto_process_var, YELLOW,
+        "When on: context window appears automatically after each capture.",
+    )
+    toggle_row2(
+        "Show context window",
+        app.show_context_var, MAUVE,
+        "When off: screenshots are sent straight to AI with no prompt — zero friction mode.",
+    )
+
+    ctk.CTkLabel(scroll, text="KPA Categories (comma-separated)", text_color=SUBTEXT,
+                 font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(8, 2))
+    entry(app.kpa_categories_var, placeholder="Technical Mastery, Engineering Operations, …")
+
+    ctk.CTkLabel(scroll, text="Custom AI Prompt (appended to base instructions)", text_color=SUBTEXT,
+                 font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(8, 2))
+    prompt_box = ctk.CTkTextbox(
+        scroll, height=70,
+        fg_color=SURFACE, border_color=SURFACE2, border_width=1,
+        text_color=TEXT, font=ctk.CTkFont("Segoe UI", 11),
+        corner_radius=8, wrap="word",
+    )
+    prompt_box.insert("1.0", app.context_prompt_var.get())
+    prompt_box.pack(fill="x", pady=(0, 4))
+
+    def _sync_prompt(*_):
+        app.context_prompt_var.set(prompt_box.get("1.0", tk.END).strip())
+    prompt_box.bind("<FocusOut>", lambda _: _sync_prompt())
+
+    divider()
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # 6. NOTIFICATIONS
+    # ══════════════════════════════════════════════════════════════════════════
+    section("🔔  NOTIFICATIONS", TEAL)
+
+    def toggle_row(label: str, var: tk.BooleanVar, color: str) -> None:
+        row = ctk.CTkFrame(scroll, fg_color="transparent")
+        row.pack(fill="x", pady=4)
+        ctk.CTkLabel(row, text=label, text_color=TEXT,
+                     font=ctk.CTkFont("Segoe UI", 11)).pack(side="left")
+        ctk.CTkSwitch(row, text="", variable=var,
+                      fg_color=SURFACE2, progress_color=color,
+                      width=44).pack(side="right")
+
+    toggle_row("Notify on successful classification", app.notify_success_var, GREEN)
+    toggle_row("Notify on processing failure",        app.notify_failure_var, RED)
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # SAVE BUTTON
+    # ══════════════════════════════════════════════════════════════════════════
+    ctk.CTkFrame(scroll, fg_color=SURFACE, height=1, corner_radius=0).pack(fill="x", pady=20)
     ctk.CTkButton(
         scroll, text="Save Configuration",
-        fg_color=GREEN, hover_color="#8ecf8a", text_color=HEADER_BG,
+        fg_color=MAUVE, hover_color="#b09de8", text_color=HEADER_BG,
         font=ctk.CTkFont("Segoe UI", 13, weight="bold"),
         corner_radius=10, height=44,
         command=app.save_settings,
-    ).pack(fill="x", pady=(24, 8))
+    ).pack(fill="x", pady=(0, 8))

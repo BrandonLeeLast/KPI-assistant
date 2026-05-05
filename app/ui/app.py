@@ -41,12 +41,33 @@ class KPIDashboardApp(ctk.CTk):
 
         self.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
 
-        # Shared state vars
-        self.api_key_var         = tk.StringVar(value=self.config_data['DEFAULT']['GEMINI_API_KEY'])
-        self.level_var           = tk.StringVar(value=self.config_data['DEFAULT']['MY_LEVEL'])
-        self.watch_folder_var    = tk.StringVar(value=self.config_data['DEFAULT']['WATCH_FOLDER'])
-        self.evidence_folder_var = tk.StringVar(value=self.config_data['DEFAULT']['BASE_KPI_FOLDER'])
-        self.hotkey_var          = tk.StringVar(value=self.config_data['DEFAULT'].get('HOTKEY', 'ctrl+shift+s'))
+        d = self.config_data['DEFAULT']
+
+        # ── AI provider ───────────────────────────────────────────────────────
+        self.provider_var  = tk.StringVar(value=d.get('AI_PROVIDER',   'Gemini'))
+        self.api_key_var   = tk.StringVar(value=d.get('API_KEY', '') or d.get('GEMINI_API_KEY', ''))
+        self.model_var     = tk.StringVar(value=d.get('AI_MODEL',      'gemini-2.0-flash'))
+
+        # ── Developer level ───────────────────────────────────────────────────
+        self.level_var     = tk.StringVar(value=d.get('MY_LEVEL',      'Intermediate'))
+
+        # ── Folders ───────────────────────────────────────────────────────────
+        self.watch_folder_var    = tk.StringVar(value=d.get('WATCH_FOLDER',    ''))
+        self.evidence_folder_var = tk.StringVar(value=d.get('BASE_KPI_FOLDER', ''))
+
+        # ── Capture ───────────────────────────────────────────────────────────
+        self.hotkey_var          = tk.StringVar(value=d.get('HOTKEY',          'ctrl+shift+s'))
+        self.capture_format_var  = tk.StringVar(value=d.get('CAPTURE_FORMAT',  'PNG'))
+
+        # ── Processing ────────────────────────────────────────────────────────
+        self.auto_process_var    = tk.BooleanVar(value=d.get('AUTO_PROCESS',    'true')  == 'true')
+        self.show_context_var    = tk.BooleanVar(value=d.get('SHOW_CONTEXT',    'true')  == 'true')
+        self.kpa_categories_var  = tk.StringVar(value=d.get('KPA_CATEGORIES', ''))
+        self.context_prompt_var  = tk.StringVar(value=d.get('CONTEXT_PROMPT',  ''))
+
+        # ── Notifications ─────────────────────────────────────────────────────
+        self.notify_success_var  = tk.BooleanVar(value=d.get('NOTIFY_ON_SUCCESS', 'false') == 'true')
+        self.notify_failure_var  = tk.BooleanVar(value=d.get('NOTIFY_ON_FAILURE', 'true')  == 'true')
 
         self._build_topbar()
         self._build_tabs()
@@ -244,13 +265,29 @@ class KPIDashboardApp(ctk.CTk):
             messagebox.showwarning("Not Found", f"Folder does not exist:\n{path}")
 
     def save_settings(self) -> None:
-        self.config_data['DEFAULT']['GEMINI_API_KEY']  = self.api_key_var.get()
-        self.config_data['DEFAULT']['MY_LEVEL']        = self.level_var.get()
-        self.config_data['DEFAULT']['WATCH_FOLDER']    = self.watch_folder_var.get()
-        self.config_data['DEFAULT']['BASE_KPI_FOLDER'] = self.evidence_folder_var.get()
-        # Log always lives in APPDATA — never changes regardless of evidence folder
-        self.config_data['DEFAULT']['LOG_FILE'] = os.path.join(
-            APPDATA_DIR, 'processed_log.json').replace('\\', '/')
+        d = self.config_data['DEFAULT']
+        # AI provider
+        d['AI_PROVIDER']       = self.provider_var.get()
+        d['API_KEY']           = self.api_key_var.get()
+        d['AI_MODEL']          = self.model_var.get()
+        d['GEMINI_API_KEY']    = self.api_key_var.get()  # legacy compat
+        # Level
+        d['MY_LEVEL']          = self.level_var.get()
+        # Folders
+        d['WATCH_FOLDER']      = self.watch_folder_var.get()
+        d['BASE_KPI_FOLDER']   = self.evidence_folder_var.get()
+        d['LOG_FILE']          = os.path.join(APPDATA_DIR, 'processed_log.json').replace('\\', '/')
+        # Capture
+        d['HOTKEY']            = self.hotkey_var.get()
+        d['CAPTURE_FORMAT']    = self.capture_format_var.get()
+        # Processing
+        d['AUTO_PROCESS']      = str(self.auto_process_var.get()).lower()
+        d['SHOW_CONTEXT']      = str(self.show_context_var.get()).lower()
+        d['KPA_CATEGORIES']    = self.kpa_categories_var.get()
+        d['CONTEXT_PROMPT']    = self.context_prompt_var.get()
+        # Notifications
+        d['NOTIFY_ON_SUCCESS'] = str(self.notify_success_var.get()).lower()
+        d['NOTIFY_ON_FAILURE'] = str(self.notify_failure_var.get()).lower()
 
         self.config_data['DEFAULT']['HOTKEY'] = self.hotkey_var.get()
 
