@@ -2,10 +2,10 @@ import os
 import time
 import shutil
 import PIL.Image
-import pyautogui
 from google import genai
 
 from app.processed_log import is_already_processed, mark_as_processed
+from app.ui.context_dialog import ask_context
 
 
 def process_file(file_path: str, settings, ui) -> None:
@@ -28,10 +28,7 @@ def process_file(file_path: str, settings, ui) -> None:
     ui.increment_stat("queued")
     time.sleep(1.5)  # let the OS release the file lock before we open it
 
-    user_context = pyautogui.prompt(
-        text=f"Enter STAR Context for:\n{filename}\n\n(Situation / Action / Result) — leave blank to skip:",
-        title=f"KPI Assistant  ·  {settings.get('MY_LEVEL')} Level",
-    )
+    user_context = ask_context(file_path, settings.get('MY_LEVEL'))
     if user_context is None:
         user_context = ""
 
@@ -57,13 +54,15 @@ def _classify_and_file(file_path: str, filename: str, user_context: str, setting
     ui.log("🤖 Calling Gemini Flash for classification…", "info")
     client = genai.Client(api_key=settings.get('GEMINI_API_KEY'))
 
-    img = PIL.Image.open(file_path)
+    # Open, copy into memory, close — file handle is released before the API call
+    with PIL.Image.open(file_path) as raw:
+        img = raw.copy()
+
     response = client.models.generate_content(
         model='gemini-2.0-flash',
         contents=[instructions, img],
     )
     res = response.text
-    img.close()
 
     category_part, summary = (res.split("|") + ["No summary"])[:2]
     category = (category_part.strip()

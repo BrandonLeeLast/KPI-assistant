@@ -1,11 +1,20 @@
 # Changelog
 
+## v1.0.2
+- Fixed file handle leak — watch folder files can now be deleted after processing
+- Fixed PyInstaller DLL error after auto-update (stable runtime dir in APPDATA)
+- Improved hot-swap updater bat — cleans stale runtime folder before restarting
+- Custom STAR context dialog with screenshot thumbnail (replaces pyautogui prompt)
+- Removed pyautogui dependency
+
 ## v1.0.1
 - Modern CustomTkinter UI — rounded buttons, stat cards, animated pulse indicator
-- Processed log moved to %APPDATA%/KPI-assistant/ (survives reinstalls)
+- Processed image registry moved to %APPDATA%/KPI-assistant/processed_log.json
+- JSON registry replaces plain text log — O(1) lookups, timestamps, category stored
 - Migrated to google-genai SDK (gemini-2.0-flash)
 - Refactored into clean package structure (app/, app/ui/)
-- GitHub auto-updater with hot-swap EXE batch script
+- GitHub Actions CI/CD — auto-bumps patch version on every push to main
+- Auto-updater with hot-swap EXE batch script
 
 ## v1.0.0
 - Initial release

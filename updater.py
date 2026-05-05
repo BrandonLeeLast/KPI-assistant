@@ -99,15 +99,34 @@ def perform_update(download_url: str, on_progress: callable = None) -> None:
         log(f"❌ Download failed: {e}")
         return
 
-    # Write a self-deleting batch script that runs after this process exits.
-    # Uses a :wait loop to poll until the EXE is released by Windows.
+    # Self-deleting batch script — waits for this process to fully exit,
+    # cleans up the stale PyInstaller runtime folder, swaps the EXE, then restarts.
+    runtime_dir = os.path.join(os.environ.get("APPDATA", exe_dir), "KPI-assistant", "runtime")
     bat_content = f"""@echo off
-:wait
+
+:: Wait for the old process to fully release the EXE file lock
+:wait_exe
 timeout /t 2 /nobreak >nul
 del /f /q "{current_exe}" >nul 2>&1
-if exist "{current_exe}" goto wait
+if exist "{current_exe}" goto wait_exe
+
+:: Clean up the stale PyInstaller runtime extraction folder so the new
+:: EXE gets a clean unpack — this prevents the python3xx.dll not found error
+if exist "{runtime_dir}" (
+    timeout /t 2 /nobreak >nul
+    rmdir /s /q "{runtime_dir}" >nul 2>&1
+)
+
+:: Swap in the new EXE
 move /y "{tmp_path}" "{current_exe}"
+
+:: Give Windows a moment to finish releasing all file handles
+timeout /t 3 /nobreak >nul
+
+:: Launch the updated app
 start "" "{current_exe}"
+
+:: Self-destruct
 del /f /q "%~f0"
 """
     with open(bat_path, "w") as f:
