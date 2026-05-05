@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.4
+- Fixed version label always showing v0.0.0 — now reads correctly from sys._MEIPASS when bundled
+- Fixed update check incorrectly triggering on every launch due to stale version read
+- Improved hot-swap bat — polls for _MEI DLL release before launching new EXE
+- Reverted runtime_tmpdir to None (env var expansion not supported by PyInstaller spec)
+
+## v1.0.3
+- Fixed file handle leak preventing deletion of processed screenshots from watch folder
+- Fixed context dialog thumbnail holding file handle open for duration of dialog
+
 ## v1.0.2
 - Fixed file handle leak — watch folder files can now be deleted after processing
 - Fixed PyInstaller DLL error after auto-update (stable runtime dir in APPDATA)

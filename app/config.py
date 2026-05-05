@@ -10,13 +10,9 @@ CONFIG_PATH = os.path.join(APPDATA_DIR, "config.ini")
 APP_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 
 
-RUNTIME_DIR = os.path.join(APPDATA_DIR, "runtime")
-
-
 def _ensure_appdata_dir() -> None:
-    """Create %APPDATA%/KPI-assistant/ and runtime/ on first launch."""
-    os.makedirs(APPDATA_DIR,  exist_ok=True)
-    os.makedirs(RUNTIME_DIR,  exist_ok=True)
+    """Create %APPDATA%/KPI-assistant/ on first launch."""
+    os.makedirs(APPDATA_DIR, exist_ok=True)
 
 
 def get_default_config() -> configparser.ConfigParser:

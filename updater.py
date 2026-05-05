@@ -24,15 +24,26 @@ import json
 from packaging.version import Version
 
 def _read_local_version() -> str:
-    """Read version from version.json sitting next to the EXE (or repo root in dev)."""
+    """
+    Read version from version.json.
+    When bundled by PyInstaller, the file lives in sys._MEIPASS (the extraction
+    folder). In dev, it sits next to the script / repo root.
+    """
     import os, sys, json
-    base = os.path.dirname(os.path.abspath(sys.argv[0]))
-    path = os.path.join(base, "version.json")
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)["version"]
-    except Exception:
-        return "0.0.0"
+    candidates = []
+    # 1. PyInstaller bundle extraction folder (_MEIPASS)
+    if hasattr(sys, '_MEIPASS'):
+        candidates.append(os.path.join(sys._MEIPASS, "version.json"))
+    # 2. Next to the EXE / script (dev mode)
+    candidates.append(os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "version.json"))
+
+    for path in candidates:
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)["version"]
+        except Exception:
+            continue
+    return "0.0.0"
 
 LOCAL_VERSION = _read_local_version()
 
@@ -99,34 +110,42 @@ def perform_update(download_url: str, on_progress: callable = None) -> None:
         log(f"❌ Download failed: {e}")
         return
 
-    # Self-deleting batch script — waits for this process to fully exit,
-    # cleans up the stale PyInstaller runtime folder, swaps the EXE, then restarts.
-    runtime_dir = os.path.join(os.environ.get("APPDATA", exe_dir), "KPI-assistant", "runtime")
+    # Capture the _MEI extraction folder for THIS process so we can wait
+    # for it to be fully released before starting the new EXE.
+    # sys._MEIPASS is set by PyInstaller; in dev it won't exist (that's fine).
+    mei_dir = getattr(sys, '_MEIPASS', None) or ""
+
     bat_content = f"""@echo off
 
-:: Wait for the old process to fully release the EXE file lock
+:: ── Step 1: wait for the old EXE file lock to release ──────────────────────
 :wait_exe
 timeout /t 2 /nobreak >nul
 del /f /q "{current_exe}" >nul 2>&1
 if exist "{current_exe}" goto wait_exe
 
-:: Clean up the stale PyInstaller runtime extraction folder so the new
-:: EXE gets a clean unpack — this prevents the python3xx.dll not found error
-if exist "{runtime_dir}" (
-    timeout /t 2 /nobreak >nul
-    rmdir /s /q "{runtime_dir}" >nul 2>&1
+:: ── Step 2: wait for PyInstaller _MEI temp folder to be released ───────────
+:: This is the folder containing python3xx.dll for the OLD process.
+:: The new EXE must not start until Windows has fully let go of it,
+:: otherwise it picks up a half-cleaned DLL path and crashes.
+set "MEI={mei_dir}"
+if not "%MEI%"=="" (
+    :wait_mei
+    if exist "%MEI%\\python*.dll" (
+        timeout /t 2 /nobreak >nul
+        goto wait_mei
+    )
+    :: Folder is released — clean it up
+    rmdir /s /q "%MEI%" >nul 2>&1
 )
 
-:: Swap in the new EXE
+:: ── Step 3: swap in the new EXE ────────────────────────────────────────────
 move /y "{tmp_path}" "{current_exe}"
 
-:: Give Windows a moment to finish releasing all file handles
-timeout /t 3 /nobreak >nul
-
-:: Launch the updated app
+:: ── Step 4: short settle, then launch ──────────────────────────────────────
+timeout /t 2 /nobreak >nul
 start "" "{current_exe}"
 
-:: Self-destruct
+:: ── Step 5: self-destruct ───────────────────────────────────────────────────
 del /f /q "%~f0"
 """
     with open(bat_path, "w") as f:
