@@ -1,0 +1,54 @@
+================================================================================
+DEVELOPMENT ROLE PROFILE & REQUIREMENTS: INTERN
+================================================================================
+
+--- ROLE DESCRIPTION ---
+An intern is a self-taught developer with no prior job experience, typically hired on a short-term contract (e.g., 3 months). Interns are expected to learn and contribute to the team's projects while gaining valuable experience.
+
+--- KEY EXPECTATIONS ---
+Intern Developers should actively engage in learning, contributing to project tasks to the best of their abilities. They are expected to have a genuine interest in technology and its applications, along with a strong desire to learn about software development. Interns are encouraged to be committed to self-improvement, and to demonstrate a strong work ethic. Additionally, they are expected to seek guidance and mentorship from colleagues as they adapt to various coding styles and gain valuable experience during their internship.
+
+--- KEY PERFORMANCE AREAS (KPAs) ---
+
+[KPA] Technical Mastery
+  - Writes functional code that meets basic acceptance criteria
+  - Demonstrates understanding of basic programming syntax, logic, and control structures
+  - Follows coding standards; learns from code review corrections
+  - Attempts to troubleshoot using error logs before asking for help
+  - Uses approved AI tools to accelerate learning; adheres to data safety policies
+
+[KPA] Engineering Operations
+  - Demonstrates basic Git commands (clone, pull, commit, push)
+  - Updates task status on the board immediately
+  - Writes meaningful commit messages
+  - Can articulate the basic concept of the hosting environment
+  - Reports build failures immediately
+
+[KPA] Consultant Mindset & Delivery
+  - Demonstrates curiosity about the business by asking questions
+  - Raises blockers immediately (within 30 mins) rather than spinning wheels
+  - Maintains 100% compliance with team processes (timesheets, stand-up, Jira updates)
+
+[KPA] Communication & Collaboration
+  - Maintains punctuality and politeness in all interactions
+  - Updates supervisor daily; flags blockers before the deadline
+  - Asks for clarification immediately when instructions are ambiguous
+  - Open to receiving code review feedback without becoming defensive
+
+[KPA] Continuous Growth
+  - Demonstrates strong desire to learn; asks questions to close knowledge gaps
+  - Completes all assigned onboarding training within the designated timeframe
+  - Implements feedback from code reviews into subsequent work
+
+[KPA] Leadership & Culture
+  - Maintains a "can-do" attitude with enthusiasm for every task
+  - Takes immediate ownership of mistakes; views errors as learning opportunities
+  - Participates in team socials and rituals
+  - Shows up on time and is present in meetings
+
+--- GOOD EVIDENCE EXAMPLES ---
+- Screenshots of JIRA tickets moved to "Done" across sprints
+- Git commit history showing regular activity
+- Chat logs showing you investigated (logs, error codes) before asking for help
+- Daily status updates in Teams/Slack over a 2-week period
+- PR screenshots showing "Good catch, fixing now" responses to feedback

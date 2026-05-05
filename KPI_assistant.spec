@@ -8,8 +8,9 @@ a = Analysis(
     pathex=['.'],
     binaries=[],
     datas=[
-        ('config.ini',   '.'),
-        ('version.json', '.'),
+        ('config.ini',              '.'),
+        ('version.json',            '.'),
+        ('app/skills_matrix',       'app/skills_matrix'),
     ],
     hiddenimports=[
         'app',
@@ -26,6 +27,7 @@ a = Analysis(
         'app.ui.widgets',
         'app.ui.context_dialog',
         'app.ai_provider',
+        'app.kpa_context',
         'anthropic',
         'openai',
         'app.ui.capture_overlay',

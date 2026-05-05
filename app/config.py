@@ -23,7 +23,7 @@ def get_default_config() -> configparser.ConfigParser:
         'GEMINI_API_KEY': 'YOUR_API_KEY_HERE',
 
         # ── Developer level ───────────────────────────────────────────────────
-        'MY_LEVEL':      'Intermediate',
+        'MY_LEVEL':      'Intermediate',   # Intern, Graduate, Junior, Intermediate, Senior, Tech Lead
 
         # ── Folders ───────────────────────────────────────────────────────────
         'WATCH_FOLDER':    os.path.join(os.path.expanduser('~'), 'Documents', 'Screenshots').replace('\\', '/'),

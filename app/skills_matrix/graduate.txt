@@ -1,0 +1,57 @@
+================================================================================
+DEVELOPMENT ROLE PROFILE & REQUIREMENTS: GRADUATE
+================================================================================
+
+--- ROLE DESCRIPTION ---
+A graduate is an entry-level developer with a university degree in a relevant field. They may have 0 to 10 months of coding experience. A Graduate can also be a self-taught developer or intern with 3-6 months of experience.
+
+--- KEY EXPECTATIONS ---
+Graduate Software Developers should work effectively as part of a team, design, develop, and execute code. They must exhibit a genuine passion for technology and a strong desire to learn. They are expected to be open to trying new approaches, committed to self-improvement, and to display a strong work ethic.
+
+--- KEY PERFORMANCE AREAS (KPAs) ---
+
+[KPA] Technical Mastery
+  - Writes code that adheres to team style guides without manual correction
+  - Demonstrates working understanding of OOP/Functional principles
+  - Consistently applies basic security hygiene (never commits passwords/keys, sanitizes inputs)
+  - Actively corrects issues raised in code reviews and asks clarifying questions
+  - Actively uses AI tools for boilerplate code and unit test generation
+  - Can verify AI-generated code for correctness and security before committing
+
+[KPA] Engineering Operations
+  - Follows the team's branching strategy correctly
+  - Updates tickets daily with relevant and clear comments
+  - Understands the link between a ticket (User Story) and a Code Commit
+  - Can trigger/monitor the CI/CD pipeline and interpret standard error logs
+  - Can fix simple "config/missing file" build errors independently
+
+[KPA] Consultant Mindset & Delivery
+  - Can articulate the business goal of their last 3 features
+  - Uses correct client/industry terminology in stand-ups and ticket comments
+  - Considers user experience when implementing features; flags obvious UX issues
+  - Consistently attempts to estimate tasks and provides reasoning
+  - Proactively updates ticket status and communicates progress daily
+
+[KPA] Communication & Collaboration
+  - Summarizes meeting outcomes or tasks in writing to confirm alignment
+  - Can demo their specific feature/fix clearly during sprint reviews
+  - Ticket comments, commit messages, and emails are clear and professional
+  - Provides constructive code review feedback; demonstrates willingness to learn
+
+[KPA] Continuous Growth
+  - Achieves 100% of learning milestones in their Personal Development Plan
+  - Studies for and attempts one foundational cloud certification
+  - Takes ownership of their own learning; doesn't wait to be sent on training
+
+[KPA] Leadership & Culture
+  - Demonstrates stable work ethic and emotional consistency
+  - Contributes to team discussions and brainstorming sessions
+  - High coachability; actively incorporates team feedback into daily routine
+  - Represents the company professionally in all internal channels
+
+--- GOOD EVIDENCE EXAMPLES ---
+- Clean linter/SonarQube reports across multiple months
+- Multiple PR links showing properly structured code
+- Ticket comments showing daily updates consistently
+- "Before and After" examples showing fixes from PR feedback
+- Progress bar from learning platform showing >50% certification completion

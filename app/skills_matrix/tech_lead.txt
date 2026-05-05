@@ -1,0 +1,79 @@
+================================================================================
+DEVELOPMENT ROLE PROFILE & REQUIREMENTS: TECH LEAD
+================================================================================
+
+--- ROLE DESCRIPTION ---
+A technical lead has 8+ years of experience and is responsible for setting and enforcing technical standards and practices within the team. They provide leadership and guidance on complex technical issues across multiple teams.
+
+--- KEY EXPECTATIONS ---
+As a Technical Lead, you play a pivotal role in leading your delivery team and providing guidance across multiple teams. You engage with your team daily, ensuring they tackle complex challenges within specified deadlines. Pragmatism is key — prioritize practical, effective solutions over purely academic patterns. You balance technical theory with a strong focus on ROI and manage complex technical challenges while collaborating closely with senior management on strategic goals.
+
+--- KEY PERFORMANCE AREAS (KPAs) ---
+
+[KPA] Technical Mastery
+  - Defines and enforces technical standards, linter rules, and coding guidelines for the project
+  - Decisive technical authority; resolves disputes regarding coding styles or architectural choices
+  - Tracks technical debt and makes decisions on when to "pay it down" vs. "ship fast"
+  - Takes overall responsibility for code security posture and alignment with client security policies
+  - Defines the organization's strategy for system health and documentation
+  - Provides detailed technical analysis for "Build vs. Buy" decisions
+  - Steps in to solve the most complex technical hurdles stalling the delivery team
+  - Ensures all technical solutions are practical and aligned with client budget/timeline
+  - Evaluates risks vs. benefits of introducing new technologies; provides "go/no-go"
+  - Drives adoption of agreed modern tools and practices
+  - Identifies concrete areas where emerging tech (like AI) could solve business problems
+
+[KPA] Engineering Operations
+  - Manages versioning and release process (tagging, release notes)
+  - Uses data to identify bottlenecks in the ALM process and proposes process improvements
+  - Ensures repository structure supports the architecture (Monorepo vs. Polyrepo decisions)
+  - Ensures application architecture aligns with client's environment strategy
+  - Validates operational readiness of a release (performance, security)
+  - Identifies opportunities for modernization and presents cost savings to client
+
+[KPA] Consultant Mindset & Delivery
+  - Ensures technical decisions directly support the client's business goals and constraints
+  - Proactively identifies and proposes technical initiatives that reduce operational costs
+  - Translates technical risks into business language to enable informed client decisions
+  - Ultimately accountable for the team hitting sprint goals
+  - Identifies and removes non-technical blockers (access rights, ambiguous requirements) quickly
+  - Enforces the agreed delivery process for the entire team
+
+[KPA] Communication & Collaboration
+  - Acts as a sounding board for client's technical leadership; influences technical strategy
+  - Resolves escalations or disputes between the delivery team and the client
+  - Protects the team from unnecessary client noise or politics
+  - Fosters a culture of psychological safety where team members feel safe to admit mistakes
+  - Ensures code review guidelines and collaboration standards are applied consistently
+  - Collaborates with other Tech Leads to share lessons learned and prevent silos
+
+[KPA] Continuous Growth
+  - Identifies skill gaps in the wider team and proposes training plans to close them
+  - Stays ahead of industry trends to ensure the team doesn't become obsolete
+  - Actively grooms potential successors by sharing high-level knowledge and responsibilities
+
+[KPA] Leadership & Culture
+  - Shapes the technical "spirit" of the team; inspires care for quality and long-term maintainability
+  - Translates business value for the team so Devs at all levels understand their contribution
+  - Uses seniority to absorb technical friction, allowing the rest of the team to stay focused
+  - Views success through the growth of those around them; actively works to upskill the team
+
+[KPA] Team Management (Team Leads Only)
+  - Fosters a positive, inclusive, psychologically safe environment
+  - Conducts regular meaningful 1-on-1s; provides timely feedback (positive and corrective)
+  - Addresses interpersonal conflicts within the team swiftly and professionally
+  - Actively monitors team morale and flags burnout risks to management early
+  - Exemplifies company values (Integrity, Pragmatism, People-Centric) in all actions
+  - Ensures timesheets, leave requests, and expenses are submitted accurately and on time
+  - Provides accurate and honest status reports; does not hide "red" status
+  - Manages smooth onboarding of new joiners and professional offboarding of leavers
+  - Ensures team adheres to company security, remote work, and core hours policies
+  - Acts as the primary unblocker for logistical or administrative hurdles
+
+--- GOOD EVIDENCE EXAMPLES ---
+- Evidence of maintaining technical rules over time (updated Wiki pages, Linter rule announcements)
+- Series of "Release Note" emails or Git Tags/Releases showing consistent semantic versioning
+- "Decision Records" or emails analyzing "Build vs. Buy" or stack/tech choices for the client
+- Monthly/Quarterly emails confirming the security status of the project
+- Sprint Reports (PDFs) showing "Committed vs Completed" velocity stability over 3+ sprints
+- Calendar logs showing 100% adherence to bi-weekly 1-on-1s

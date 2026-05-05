@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.2.0
+- Full skills matrix injected into AI prompt per developer level — AI now classifies against actual KPA criteria, not just category names
+- Added skills matrix text files for all levels: Intern, Graduate, Junior, Intermediate, Senior, Tech Lead
+- Added Tech Lead level with Team Management KPA (exclusive to that level)
+- AI prompt now includes role description, KPA criteria, subcategories and evidence examples for the selected level
+- Category matching now fuzzy-validates against the level's actual applicable KPAs
+- Level selector changed from segmented button to dropdown to accommodate all 6 levels
+
 ## v1.1.1
 - Added "Show context window" toggle — disable for zero-friction silent processing
 - Added independent notification toggles for success and failure events

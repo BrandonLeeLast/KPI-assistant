@@ -4,6 +4,7 @@ import shutil
 
 from app.processed_log import is_already_processed, mark_as_processed
 from app.ai_provider import classify, PROVIDERS
+from app.kpa_context import build_classification_prompt, get_categories_for_level
 from app.ui.context_dialog import ask_context
 
 
@@ -52,25 +53,17 @@ def process_file(file_path: str, settings, ui) -> None:
 
 def _classify_and_file(file_path: str, filename: str, user_context: str,
                         settings, ui) -> str:
-    provider  = settings.get('AI_PROVIDER', 'Gemini')
-    api_key   = settings.get('API_KEY', '') or settings.get('GEMINI_API_KEY', '')
-    model     = settings.get('AI_MODEL', 'gemini-2.0-flash')
-    level     = settings.get('MY_LEVEL', 'Intermediate')
-    kpa_cats  = settings.get('KPA_CATEGORIES',
-                             'Technical Mastery,Engineering Operations,Consultant Mindset,'
-                             'Communication & Collaboration,Leadership')
+    provider      = settings.get('AI_PROVIDER', 'Gemini')
+    api_key       = settings.get('API_KEY', '') or settings.get('GEMINI_API_KEY', '')
+    model         = settings.get('AI_MODEL', 'gemini-2.0-flash')
+    level         = settings.get('MY_LEVEL', 'Intermediate')
     custom_prompt = settings.get('CONTEXT_PROMPT', '')
 
-    instructions = (
-        f"You are a Performance Auditor for an '{level}' developer. "
-        "Task: Use the STAR Method (Situation, Task, Action, Result). "
-        f"User Context: '{user_context}'. "
-        f"{custom_prompt} "
-        f"Pick ONE KPA from: {kpa_cats}. "
-        "Format: CATEGORY | STAR SUMMARY."
-    )
+    # Build a rich, level-aware prompt using the full skills matrix
+    instructions = build_classification_prompt(level, user_context, custom_prompt)
+    valid_cats   = get_categories_for_level(level)
 
-    ui.log(f"🤖 Calling {provider} ({model}) for classification…", "info")
+    ui.log(f"🤖 Calling {provider} ({model}) | Level: {level}", "info")
 
     res = classify(file_path, instructions, provider, api_key, model)
 
@@ -78,6 +71,13 @@ def _classify_and_file(file_path: str, filename: str, user_context: str,
     category = (category_part.strip()
                 .replace("*", "").replace(":", "")
                 .replace("/", "").replace("\\", ""))
+
+    # Fuzzy-match against valid categories for this level
+    matched = next((c for c in valid_cats
+                    if c.lower() in category.lower() or category.lower() in c.lower()),
+                   None)
+    if matched:
+        category = matched
 
     target   = os.path.join(settings.get('BASE_KPI_FOLDER'), category)
     os.makedirs(target, exist_ok=True)

@@ -1,0 +1,62 @@
+================================================================================
+DEVELOPMENT ROLE PROFILE & REQUIREMENTS: JUNIOR
+================================================================================
+
+--- ROLE DESCRIPTION ---
+A junior developer has 10+ months of coding experience, often working with multiple programming languages. They are proficient in coding but not yet at the intermediate level.
+
+--- KEY EXPECTATIONS ---
+Junior Developers demonstrate the ability to work both independently and as part of a team. They take ownership of tasks, actively participate in team discussions, and contribute effectively to project goals.
+
+--- KEY PERFORMANCE AREAS (KPAs) ---
+
+[KPA] Technical Mastery
+  - Writes clean, readable code that a peer can understand without explanation
+  - Writes unit tests for their own code (happy and sad paths) as standard practice
+  - Can navigate an existing codebase to understand dependencies before making changes
+  - Applies standard secure coding practices (input validation, encoding)
+  - Writes meaningful error messages and documents new endpoints clearly
+  - Independently debugs and resolves standard issues/bugs
+  - Avoids over-complicating simple tasks; implements the most straightforward working solution
+  - Integrates AI tools into daily workflow; shares useful AI prompts with the team
+
+[KPA] Engineering Operations
+  - Independently resolves standard merge conflicts
+  - Ensures all code changes are linked to a specific work item/ticket
+  - Proactively flags "Blocked" tickets immediately with a comment tagging the relevant person
+  - Deploys to Non-Prod environments following the checklist with 100% success rate
+  - Never hardcodes connection strings; uses Managed Identities/Key Vaults
+  - Achieves the Foundation Level Certification (Azure Fundamentals/AWS Cloud Practitioner)
+
+[KPA] Consultant Mindset & Delivery
+  - Actively listens in meetings to understand business context
+  - Can articulate why a bug is high priority based on business impact
+  - Provides reasonably accurate estimates; communicates early if variance >20% expected
+  - Delivers routine features independently without constant supervision
+  - Flags if a request seems different from the original description (prevents scope creep)
+
+[KPA] Communication & Collaboration
+  - Explains technical issues to non-technical stakeholders without excessive jargon
+  - Informs the team/client of progress before being asked
+  - Asks clarifying questions regarding edge cases during refinement sessions
+  - Actively participates in code reviews; identifies logical issues, not just syntax
+  - Helps onboard interns or grads by explaining project setup or domain context
+
+[KPA] Continuous Growth
+  - Successfully achieves a required foundational certification
+  - Begins study for an Associate-level specialization
+  - Provides documented examples of applying training concepts directly to project tasks
+  - Proactively identifies technical skill gaps and initiates PDP goals to address them
+
+[KPA] Leadership & Culture
+  - Takes full responsibility for assigned tasks; raises flags early with a way forward
+  - Proactively checks in on interns or newer grads to offer help
+  - Brings solutions, not just problems, to retrospectives or team meetings
+  - Begins to mirror company core values without being prompted
+
+--- GOOD EVIDENCE EXAMPLES ---
+- 3+ examples of complex logic merged with no "clarity" questions from reviewers
+- History of unit test suites added (screenshots of coverage reports increasing)
+- Log of bugs solved independently, highlighting the toughest 3 of the period
+- Official PDF certificate for Azure Fundamentals/AWS Cloud Practitioner
+- Chat logs guiding a new intern through setup process

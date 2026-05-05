@@ -1,0 +1,66 @@
+================================================================================
+DEVELOPMENT ROLE PROFILE & REQUIREMENTS: SENIOR
+================================================================================
+
+--- ROLE DESCRIPTION ---
+A senior developer has 5+ years of experience and is recognized as a technical expert. They are responsible for driving high-level technical decisions, optimizing code, and mentoring junior and intermediate developers.
+
+--- KEY EXPECTATIONS ---
+Senior Developers manage, scope, and oversee projects, lead teams of more junior developers, and support various development elements. They actively contribute to software design and implementation, demonstrate exceptional creativity and innovation, and thrive in high-pressure environments.
+
+--- KEY PERFORMANCE AREAS (KPAs) ---
+
+[KPA] Technical Mastery
+  - Sets the coding standard for the team; their PRs serve as the example of "perfect" code
+  - Architects and implements complex features ensuring modularity, scalability, maintainability
+  - Acts as "Security Champion": enforces secure standards; ensures libraries/dependencies are patched
+  - Conducts "threat modeling" during design — anticipating how a malicious actor might exploit logic
+  - Designs for Telemetry/Metrics to enable external support teams
+  - Actively prevents over-engineering; challenges complex solutions where a simple one exists
+  - Solves systemic issues: race conditions, memory leaks, performance bottlenecks
+  - Identifies technical risks the client hasn't noticed yet and proposes solutions
+  - Balances technical purity with business reality (budget/timeline)
+  - Mentors team on effective and secure AI usage
+  - Identifies strategic opportunities to introduce Emerging Tech into client solutions
+
+[KPA] Engineering Operations
+  - Ensures team's adherence to ALM processes; coaches offenders
+  - Defines/refines and justifies the branching strategy for the project
+  - Enforces the "Definition of Done"; rejects PRs that lack tests or documentation
+  - Manages infrastructure changes via IaC/scripts rather than manual GUI changes
+  - Sets up monitoring and alerting to detect production performance issues proactively
+  - Guides team on building applications resilient to infrastructure failures
+
+[KPA] Consultant Mindset & Delivery
+  - Proactively explains technical concepts in non-technical language to stakeholders
+  - Helps prioritize the backlog based on business impact/deadlines
+  - Possesses deep domain knowledge; catches logical gaps in business requirements
+  - Takes full accountability for a stream of work; ensures the wider team delivers
+  - Successfully supports Lead in negotiating technical scope to meet deadlines
+  - Takes responsibility for "last mile"; ensures zero failed deployments due to process errors
+
+[KPA] Communication & Collaboration
+  - Articulates technical decisions in terms of ROI, risk, or timeline impact to stakeholders
+  - Successfully navigates scope creep or unrealistic deadlines with pragmatic alternatives
+  - Sets accurate timelines (variance between estimated and actual delivery <10%)
+  - Sets the standard for code review quality; provides high-level architectural feedback
+  - Formally mentors assigned juniors/intermediates per company Mentorship Program
+  - Leads "Lunch and Learns" or technical sharing sessions to upskill the wider team
+
+[KPA] Continuous Growth
+  - Targets and makes measurable progress toward an Advanced/Strategic certification
+  - Formally mentors a Junior or Graduate specifically toward their certification goal
+  - Reviews training material; recommends updates or new courses to ensure quality learning
+
+[KPA] Leadership & Culture
+  - Models ideal behavior for the entire team (work ethic, attitude, communication)
+  - Mentors others not just on code, but on how to be a professional
+  - Acts as a positive bridge between dev team and other departments (QA, PMs, Clients)
+  - Remains calm and solution-oriented during high-pressure periods (deployment failures, tight deadlines)
+
+--- GOOD EVIDENCE EXAMPLES ---
+- Digest of PR reviews showing consistent guidance on team standards
+- Whiteboard photos/diagrams from planning sessions defining structure for new features
+- Case studies of 2-3 major systemic issues (memory leaks, load times) identified and fixed
+- Emails/chat logs raising risks to PMs/Clients weeks before they became problems
+- Copies of PDP tracking sheets updated for mentees; Before/After examples of mentee growth

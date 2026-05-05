@@ -1,0 +1,64 @@
+================================================================================
+DEVELOPMENT ROLE PROFILE & REQUIREMENTS: INTERMEDIATE
+================================================================================
+
+--- ROLE DESCRIPTION ---
+An intermediate developer has 3+ years of experience and is proficient in multiple programming languages and frameworks. They are responsible for solving complex technical challenges and providing guidance to junior team members.
+
+--- KEY EXPECTATIONS ---
+Intermediate Software Engineers excel at working both independently and as part of a team. They scope tasks and features, deliver quality solutions, and are in the process of gaining expertise in architecture and design patterns. They take the lead in organizing team activities to promote knowledge sharing, and provide mentorship on technical matters.
+
+--- KEY PERFORMANCE AREAS (KPAs) ---
+
+[KPA] Technical Mastery
+  - Consistently produces high-quality, self-documenting code (variable/method names explain intent)
+  - Applies appropriate design patterns (Factory, Strategy) to solve specific problems
+  - Safely refactors legacy or "messy" code without breaking functionality
+  - Proactively optimizes for performance (e.g., database query efficiency)
+  - Identifies OWASP Top 10 vulnerabilities in peer reviews
+  - Ensures high observability in code; maintains Swagger/API specs
+  - Evaluates technical trade-offs ("Quick fix vs. Refactor later") and makes recommendations
+  - Solves complex problems spanning multiple modules or services
+  - Anticipates downstream impact of changes on other parts of the system
+  - Uses AI for complex tasks: refactoring, documentation generation, code translation
+
+[KPA] Engineering Operations
+  - Maintains a clean repository history; squashes commits before merging; keeps PRs small
+  - Tickets have clear technical notes and testing instructions for testers and future devs
+  - Can configure and modify CI/CD pipelines without breaking the build
+  - Proactively identifies cost-effective cloud resources; avoids wasting infrastructure
+  - Actively pursuing Associate-level certifications (Azure Developer/AWS Developer)
+
+[KPA] Consultant Mindset & Delivery
+  - Respectfully challenges requirements if they don't solve the business problem
+  - Avoids over-engineering; chooses simple, maintainable solutions over complex tech
+  - Identifies small improvements in client's workflow and raises them with the Lead
+  - "Under-promises and Over-delivers"; flags risks to timelines before they become issues
+  - Identifies scope creep in client discussions and directs to Lead/PM with a paper trail
+  - Drives features from "Concept" to "Production," coordinating with QA/DevOps
+
+[KPA] Communication & Collaboration
+  - Knows how to escalate delays or issues internally before communicating to client
+  - Leads stand-ups or small client demos; manages the agenda
+  - Builds rapport with client counterparts (client devs, BAs)
+  - Code reviews focus on maintainability, design patterns, and test coverage
+  - Regularly pairs with Juniors to unblock them (guides to answer, doesn't type it for them)
+  - Contributes to team knowledge base (Wiki, Documentation)
+
+[KPA] Continuous Growth
+  - Consistently meets PDP milestones; treats career growth as a project to manage
+  - Achieves an Associate-level certification (Azure Developer Associate / AWS Developer)
+  - Completes a learning module or POC in a technology outside their primary stack
+
+[KPA] Leadership & Culture
+  - Encourages peers to stick to standards in a helpful, not condescending way
+  - Identifies and course-corrects negative team behaviors constructively
+  - Creates a "safe space" for junior members to ask questions
+  - Habitually shares "gotchas" and wins with the team
+
+--- GOOD EVIDENCE EXAMPLES ---
+- PRs from last 6 months where reviewers consistently approved with "Clean" or "Readable"
+- Links to multiple instances of applying design patterns with short explanations of why
+- Compilation of PR comments where you caught security or performance issues in others' code
+- Evidence of CI/CD pipeline modifications (Git Diffs of pipeline YAMLs)
+- Recurring calendar invites for "Catch ups" or "Pairing" with a Junior
