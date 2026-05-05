@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.8
+- Fixed update progress window hanging after download — removed grab_set() which was starving the Tk event loop
+- Fixed progress bar and labels never updating — set_step/set_progress now schedule via parent.after() instead of win.after()
+- Fixed app not closing after update — os._exit(0) now scheduled via after(2500) so finish() renders before exit
+- Fixed race condition where download thread started before progress window widgets were built
+
 ## v1.0.7
 - Fixed update process leaving old instance alive after install — replaced os.kill(pid, 9) with os._exit(0) (signal 9 is not SIGKILL on Windows)
 

@@ -300,11 +300,12 @@ class KPIDashboardApp(ctk.CTk):
                     return
                 from app.ui.update_dialog import UpdateProgressWindow
                 progress = UpdateProgressWindow(self)
-                threading.Thread(
+                # Wait one event-loop tick so _build() fires before the thread starts
+                self.after(100, lambda: threading.Thread(
                     target=updater.perform_update,
                     args=(dl_url, self.log_message, progress),
                     daemon=True,
-                ).start()
+                ).start())
         self.after(0, _prompt)
 
     def manual_update_check(self) -> None:

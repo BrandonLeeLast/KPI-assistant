@@ -181,7 +181,12 @@ start "" /b "{current_exe}"
         close_fds=True,
     )
 
+    log("🔄 Updater launched — restarting in 3 seconds…")
+
     if progress:
         progress.finish("Restarting KPI Assistant…")
-    time.sleep(2.5)
-    os._exit(0)
+        # Schedule exit on the main thread AFTER after() callbacks have rendered
+        progress._parent.after(2500, lambda: os._exit(0))
+    else:
+        time.sleep(2.5)
+        os._exit(0)
