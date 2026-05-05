@@ -1,6 +1,13 @@
 # Changelog
 
-## v1.1.0
+## v1.1.1
+- Added "Show context window" toggle — disable for zero-friction silent processing
+- Added independent notification toggles for success and failure events
+- Fixed auto-updater stuck at 85% — replaced close_fds+DETACHED_PROCESS with STARTUPINFO SW_HIDE which doesn't deadlock on Windows with many open handles
+- Multi-provider AI: Gemini, Claude, OpenAI, Ollama — model and key configurable per provider
+- Full config overhaul: 6 sections, editable KPA categories, custom prompt, capture format, notifications
+
+## v1.0.9
 - Multi-provider AI support: Gemini, Claude (Anthropic), OpenAI GPT, Ollama (local)
 - Model name is now fully editable — use any model the provider supports
 - API key field with show/hide toggle per provider

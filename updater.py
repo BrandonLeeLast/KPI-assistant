@@ -170,24 +170,24 @@ start "" /b "{current_exe}"
         progress.set_step("Installing…", "Waiting for app to close")
         progress.set_progress(0.95)
 
-    # Launch bat completely hidden — no console window at all
+    # Use STARTUPINFO to hide the console window — avoids the deadlock
+    # caused by close_fds=True + DETACHED_PROCESS on Windows with many handles
+    si = subprocess.STARTUPINFO()
+    si.dwFlags    |= subprocess.STARTF_USESHOWWINDOW
+    si.wShowWindow = 0  # SW_HIDE
+
     subprocess.Popen(
         ["cmd.exe", "/c", bat_path],
-        creationflags=(
-            subprocess.CREATE_NEW_PROCESS_GROUP |
-            subprocess.DETACHED_PROCESS        |
-            subprocess.CREATE_NO_WINDOW
-        ),
-        close_fds=True,
+        startupinfo=si,
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
     )
 
     log("🔄 Updater launched — restarting in 3 seconds…")
 
     if progress:
         progress.finish("Restarting KPI Assistant…")
-        # Exit is scheduled on the main thread — this background thread returns now
         progress._parent.after(2500, lambda: os._exit(0))
-        return  # ← background thread exits; main loop handles the rest
+        return
 
     time.sleep(2.5)
     os._exit(0)
