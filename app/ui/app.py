@@ -7,7 +7,7 @@ from tkinter import filedialog, messagebox
 import customtkinter as ctk
 
 import updater
-from app.config import load_config, save_config
+from app.config import load_config, save_config, APPDATA_DIR
 from app.constants import (BG, BG2, SURFACE, SURFACE2, OVERLAY,
                             TEXT, SUBTEXT, MAUVE, GREEN, RED, HEADER_BG)
 from app.processor import process_file, is_already_processed
@@ -234,8 +234,9 @@ class KPIDashboardApp(ctk.CTk):
         self.config_data['DEFAULT']['MY_LEVEL']        = self.level_var.get()
         self.config_data['DEFAULT']['WATCH_FOLDER']    = self.watch_folder_var.get()
         self.config_data['DEFAULT']['BASE_KPI_FOLDER'] = self.evidence_folder_var.get()
-        self.config_data['DEFAULT']['LOG_FILE']        = os.path.join(
-            self.evidence_folder_var.get(), "../processed_log.txt").replace('\\', '/')
+        # Log always lives in APPDATA — never changes regardless of evidence folder
+        self.config_data['DEFAULT']['LOG_FILE'] = os.path.join(
+            APPDATA_DIR, 'processed_log.json').replace('\\', '/')
 
         save_config(self.config_data)
         self.log("💾 Configuration saved.", "success")

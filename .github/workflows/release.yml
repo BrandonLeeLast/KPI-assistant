@@ -5,44 +5,59 @@ on:
     branches: [main]
 
 permissions:
-  contents: write   # needed to create GitHub Releases and upload assets
+  contents: write
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      # ── Checkout ───────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # full history so we can tag correctly
+          fetch-depth: 0
 
-      # ── Python ─────────────────────────────────────────────────────────────
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"   # 3.11 has the best PyInstaller Windows support
-          cache: pip
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      # ── Read version from version.json ─────────────────────────────────────
-      - name: Read version
+      - name: Read version from version.json
         id: ver
         shell: pwsh
         run: |
           $v = (Get-Content version.json | ConvertFrom-Json).version
-          echo "VERSION=$v" >> $env:GITHUB_OUTPUT
-          echo "TAG=v$v"    >> $env:GITHUB_OUTPUT
+          echo "VERSION=$v"  >> $env:GITHUB_OUTPUT
+          echo "TAG=v$v"     >> $env:GITHUB_OUTPUT
 
-      # ── Build EXE ──────────────────────────────────────────────────────────
+      # ── Skip the entire build if this tag already exists on GitHub ──────────
+      # This means: only a version bump in version.json produces a new release.
+      - name: Check if tag already exists
+        id: tag_check
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.ver.outputs.TAG }}"
+          $exists = git tag --list $tag
+          if ($exists) {
+            Write-Output "Tag $tag already exists — skipping release build."
+            echo "SKIP=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Output "Tag $tag is new — proceeding with build."
+            echo "SKIP=false" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Set up Python
+        if: steps.tag_check.outputs.SKIP == 'false'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        if: steps.tag_check.outputs.SKIP == 'false'
+        run: pip install -r requirements.txt
+
       - name: Build standalone EXE
+        if: steps.tag_check.outputs.SKIP == 'false'
         run: pyinstaller KPI_assistant.spec
 
-      # ── Verify artefact ────────────────────────────────────────────────────
       - name: Verify EXE exists
+        if: steps.tag_check.outputs.SKIP == 'false'
         shell: pwsh
         run: |
           if (-not (Test-Path "dist\KPI_Assistant.exe")) {
@@ -52,8 +67,9 @@ jobs:
           $size = (Get-Item "dist\KPI_Assistant.exe").length / 1MB
           Write-Output "EXE size: $([math]::Round($size,1)) MB"
 
-      # ── Update version.json download_url to point at this release ──────────
+      # ── Patch download_url before publishing ───────────────────────────────
       - name: Patch download_url in version.json
+        if: steps.tag_check.outputs.SKIP == 'false'
         shell: pwsh
         run: |
           $json = Get-Content version.json | ConvertFrom-Json
@@ -62,25 +78,26 @@ jobs:
           $json.download_url = "https://github.com/$repo/releases/download/$tag/KPI_Assistant.exe"
           $json | ConvertTo-Json | Set-Content version.json -Encoding utf8
 
-      # ── Create / update the GitHub Release and upload the EXE ──────────────
+      # ── Create a brand-new release (fail if tag exists rather than update) ──
       - name: Create GitHub Release
+        if: steps.tag_check.outputs.SKIP == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.TAG }}
           name: "KPI Assistant ${{ steps.ver.outputs.TAG }}"
           body_path: CHANGELOG.md
-          fail_on_unmatched_files: false
           files: dist/KPI_Assistant.exe
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Commit the patched version.json back so the download_url is live ───
+      # ── Commit the patched version.json so the live download_url is correct ─
       - name: Commit updated version.json
+        if: steps.tag_check.outputs.SKIP == 'false'
         shell: pwsh
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add version.json
-          # Only commit if there's actually a change
-          git diff --cached --quiet || git commit -m "ci: update download_url for ${{ steps.ver.outputs.TAG }} [skip ci]"
+          git diff --cached --quiet || git commit -m "ci: set download_url for ${{ steps.ver.outputs.TAG }} [skip ci]"
           git push

@@ -15,6 +15,7 @@ a = Analysis(
         'app',
         'app.config',
         'app.constants',
+        'app.processed_log',
         'app.processor',
         'app.watcher',
         'app.tray',

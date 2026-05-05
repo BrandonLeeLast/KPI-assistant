@@ -5,17 +5,7 @@ import PIL.Image
 import pyautogui
 from google import genai
 
-
-def is_already_processed(filename: str, log_file: str) -> bool:
-    if not os.path.exists(log_file):
-        return False
-    with open(log_file, "r") as f:
-        return filename in f.read().splitlines()
-
-
-def mark_as_processed(filename: str, log_file: str) -> None:
-    with open(log_file, "a") as f:
-        f.write(filename + "\n")
+from app.processed_log import is_already_processed, mark_as_processed
 
 
 def process_file(file_path: str, settings, ui) -> None:
@@ -29,7 +19,9 @@ def process_file(file_path: str, settings, ui) -> None:
         return
 
     log_file = settings.get('LOG_FILE')
+
     if is_already_processed(filename, log_file):
+        ui.log(f"⏭  Already processed, skipping: {filename}", "info")
         return
 
     ui.log(f"🔍 New screenshot detected: {filename}", "info")
@@ -44,14 +36,15 @@ def process_file(file_path: str, settings, ui) -> None:
         user_context = ""
 
     try:
-        _classify_and_file(file_path, filename, user_context, settings, ui)
-        mark_as_processed(filename, log_file)
+        category = _classify_and_file(file_path, filename, user_context, settings, ui)
+        mark_as_processed(filename, log_file, category)
     except Exception as e:
         ui.log(f"❌ Analysis error: {e}", "error")
         ui.increment_stat("errors")
 
 
-def _classify_and_file(file_path: str, filename: str, user_context: str, settings, ui) -> None:
+def _classify_and_file(file_path: str, filename: str, user_context: str, settings, ui) -> str:
+    """Calls Gemini, files the image, writes the .txt summary. Returns the category string."""
     instructions = (
         f"You are a Performance Auditor for an '{settings.get('MY_LEVEL')}' developer. "
         "Task: Use the STAR Method (Situation, Task, Action, Result). "
@@ -89,3 +82,5 @@ def _classify_and_file(file_path: str, filename: str, user_context: str, setting
         ui.increment_stat("filed")
     else:
         ui.log(f"⚠️  Low-context item held in: {category}", "warn")
+
+    return category
