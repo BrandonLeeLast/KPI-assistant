@@ -23,9 +23,19 @@ import urllib.request
 import json
 from packaging.version import Version
 
-LOCAL_VERSION = "1.0.0"
+def _read_local_version() -> str:
+    """Read version from version.json sitting next to the EXE (or repo root in dev)."""
+    import os, sys, json
+    base = os.path.dirname(os.path.abspath(sys.argv[0]))
+    path = os.path.join(base, "version.json")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)["version"]
+    except Exception:
+        return "0.0.0"
 
-# Replace with your actual raw GitHub URL after pushing version.json to the repo.
+LOCAL_VERSION = _read_local_version()
+
 VERSION_CHECK_URL = (
     "https://raw.githubusercontent.com/BrandonLeeLast/KPI-assistant/main/version.json"
 )
