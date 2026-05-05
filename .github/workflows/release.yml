@@ -17,47 +17,51 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Read version from version.json
+      # ── Auto-bump the patch version ─────────────────────────────────────────
+      # Reads current version.json, increments patch (1.0.0 → 1.0.1), writes it
+      # back and sets VERSION / TAG outputs for all subsequent steps.
+      - name: Auto-bump patch version
         id: ver
         shell: pwsh
         run: |
-          $v = (Get-Content version.json | ConvertFrom-Json).version
-          echo "VERSION=$v"  >> $env:GITHUB_OUTPUT
-          echo "TAG=v$v"     >> $env:GITHUB_OUTPUT
+          $json    = Get-Content version.json | ConvertFrom-Json
+          $parts   = $json.version -split '\.'
+          $parts[2] = [int]$parts[2] + 1
+          $newVer  = $parts -join '.'
+          $newTag  = "v$newVer"
 
-      # ── Skip the entire build if this tag already exists on GitHub ──────────
-      # This means: only a version bump in version.json produces a new release.
-      - name: Check if tag already exists
-        id: tag_check
+          $json.version      = $newVer
+          $json.download_url = "https://github.com/${{ github.repository }}/releases/download/$newTag/KPI_Assistant.exe"
+          $json | ConvertTo-Json | Set-Content version.json -Encoding utf8
+
+          echo "VERSION=$newVer" >> $env:GITHUB_OUTPUT
+          echo "TAG=$newTag"     >> $env:GITHUB_OUTPUT
+          Write-Output "Bumped to $newVer"
+
+      # ── Commit bumped version.json before the build ─────────────────────────
+      # Committed first so the EXE baked by PyInstaller reflects the new version.
+      - name: Commit version bump
         shell: pwsh
         run: |
-          $tag = "${{ steps.ver.outputs.TAG }}"
-          $exists = git tag --list $tag
-          if ($exists) {
-            Write-Output "Tag $tag already exists — skipping release build."
-            echo "SKIP=true" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Output "Tag $tag is new — proceeding with build."
-            echo "SKIP=false" >> $env:GITHUB_OUTPUT
-          }
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.json
+          git commit -m "ci: bump version to ${{ steps.ver.outputs.VERSION }} [skip ci]"
+          git push
 
       - name: Set up Python
-        if: steps.tag_check.outputs.SKIP == 'false'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
 
       - name: Install dependencies
-        if: steps.tag_check.outputs.SKIP == 'false'
         run: pip install -r requirements.txt
 
       - name: Build standalone EXE
-        if: steps.tag_check.outputs.SKIP == 'false'
         run: pyinstaller KPI_assistant.spec
 
       - name: Verify EXE exists
-        if: steps.tag_check.outputs.SKIP == 'false'
         shell: pwsh
         run: |
           if (-not (Test-Path "dist\KPI_Assistant.exe")) {
@@ -67,37 +71,31 @@ jobs:
           $size = (Get-Item "dist\KPI_Assistant.exe").length / 1MB
           Write-Output "EXE size: $([math]::Round($size,1)) MB"
 
-      # ── Patch download_url before publishing ───────────────────────────────
-      - name: Patch download_url in version.json
-        if: steps.tag_check.outputs.SKIP == 'false'
+      # ── Extract release notes for this version from CHANGELOG.md ────────────
+      - name: Extract changelog entry
+        id: changelog
         shell: pwsh
         run: |
-          $json = Get-Content version.json | ConvertFrom-Json
-          $repo = "${{ github.repository }}"
-          $tag  = "${{ steps.ver.outputs.TAG }}"
-          $json.download_url = "https://github.com/$repo/releases/download/$tag/KPI_Assistant.exe"
-          $json | ConvertTo-Json | Set-Content version.json -Encoding utf8
+          $ver     = "${{ steps.ver.outputs.VERSION }}"
+          $content = Get-Content CHANGELOG.md -Raw
+          # Grab the block between this version header and the next one
+          if ($content -match "(?s)## v$ver\r?\n(.*?)(\r?\n## v|\z)") {
+            $notes = $Matches[1].Trim()
+          } else {
+            $notes = "See commit history for changes."
+          }
+          # Write to a temp file to safely pass multi-line content
+          $notes | Out-File release_notes.txt -Encoding utf8
+          Write-Output "Extracted release notes for v$ver"
 
-      # ── Create a brand-new release (fail if tag exists rather than update) ──
+      # ── Create a new GitHub Release and upload the EXE ──────────────────────
       - name: Create GitHub Release
-        if: steps.tag_check.outputs.SKIP == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.TAG }}
           name: "KPI Assistant ${{ steps.ver.outputs.TAG }}"
-          body_path: CHANGELOG.md
+          body_path: release_notes.txt
           files: dist/KPI_Assistant.exe
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # ── Commit the patched version.json so the live download_url is correct ─
-      - name: Commit updated version.json
-        if: steps.tag_check.outputs.SKIP == 'false'
-        shell: pwsh
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add version.json
-          git diff --cached --quiet || git commit -m "ci: set download_url for ${{ steps.ver.outputs.TAG }} [skip ci]"
-          git push
