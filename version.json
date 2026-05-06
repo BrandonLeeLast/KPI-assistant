@@ -1,5 +1,5 @@
 {
   "version": "1.0.25",
-  "release_notes": "Initial release - ShareX ingestion, Gemini classification, STAR-method filing.",
-  "download_url": "https://github.com/BrandonLeeLast/KPI-assistant/releases/download/v1.0.25/KPI_Assistant.exe"
+  "release_notes": "Proper Windows installer — installs to Programs, creates Start Menu shortcut, auto-updates silently.",
+  "download_url": "https://github.com/BrandonLeeLast/KPI-assistant/releases/download/v1.0.25/KPI_Assistant_Setup.exe"
 }

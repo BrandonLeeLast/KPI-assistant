@@ -374,7 +374,7 @@ class KPIDashboardApp(ctk.CTk):
                 "Update Available",
                 f"KPI Assistant v{new_ver} is ready (you have v{updater.LOCAL_VERSION}).\n\n"
                 f"{notes}\n\n"
-                f"Install now? The app will close, update, and relaunch automatically."
+                f"Install now? The installer will run silently and relaunch the app automatically."
             ):
                 dl_url = remote_info.get("download_url", "")
                 if not dl_url:
@@ -386,7 +386,7 @@ class KPIDashboardApp(ctk.CTk):
 
                 # on_ready runs on main thread after download — triggers clean shutdown
                 def on_ready():
-                    self.after(0, lambda: updater.launch_swap_and_exit(self))
+                    self.after(0, lambda: updater.launch_installer_and_exit(self))
 
                 threading.Thread(
                     target=updater.perform_update,

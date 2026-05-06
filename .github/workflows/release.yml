@@ -18,8 +18,6 @@ jobs:
           fetch-depth: 0
 
       # ── Auto-bump the patch version ─────────────────────────────────────────
-      # Reads current version.json, increments patch (1.0.0 → 1.0.1), writes it
-      # back and sets VERSION / TAG outputs for all subsequent steps.
       - name: Auto-bump patch version
         id: ver
         shell: pwsh
@@ -30,16 +28,16 @@ jobs:
           $newVer  = $parts -join '.'
           $newTag  = "v$newVer"
 
-          $json.version      = $newVer
-          $json.download_url = "https://github.com/${{ github.repository }}/releases/download/$newTag/KPI_Assistant.exe"
+          $json.version          = $newVer
+          $json.download_url     = "https://github.com/${{ github.repository }}/releases/download/$newTag/KPI_Assistant_Setup.exe"
+          $json.release_notes    = ""
           $json | ConvertTo-Json | Set-Content version.json -Encoding utf8
 
           echo "VERSION=$newVer" >> $env:GITHUB_OUTPUT
           echo "TAG=$newTag"     >> $env:GITHUB_OUTPUT
           Write-Output "Bumped to $newVer"
 
-      # ── Commit bumped version.json before the build ─────────────────────────
-      # Committed first so the EXE baked by PyInstaller reflects the new version.
+      # ── Commit bumped version.json ───────────────────────────────────────────
       - name: Commit version bump
         shell: pwsh
         run: |
@@ -55,9 +53,10 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: pip install -r requirements.txt
 
+      # ── Build standalone EXE ─────────────────────────────────────────────────
       - name: Build standalone EXE
         run: pyinstaller KPI_assistant.spec
 
@@ -71,31 +70,50 @@ jobs:
           $size = (Get-Item "dist\KPI_Assistant.exe").length / 1MB
           Write-Output "EXE size: $([math]::Round($size,1)) MB"
 
-      # ── Extract release notes for this version from CHANGELOG.md ────────────
+      # ── Install Inno Setup and build installer ───────────────────────────────
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          echo "Inno Setup installed"
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          & $iscc "installer\setup.iss"
+          if (-not (Test-Path "dist\KPI_Assistant_Setup.exe")) {
+            Write-Error "Installer build failed — dist\KPI_Assistant_Setup.exe not found"
+            exit 1
+          }
+          $size = (Get-Item "dist\KPI_Assistant_Setup.exe").length / 1MB
+          Write-Output "Installer size: $([math]::Round($size,1)) MB"
+
+      # ── Extract changelog entry ──────────────────────────────────────────────
       - name: Extract changelog entry
         id: changelog
         shell: pwsh
         run: |
           $ver     = "${{ steps.ver.outputs.VERSION }}"
           $content = Get-Content CHANGELOG.md -Raw
-          # Grab the block between this version header and the next one
           if ($content -match "(?s)## v$ver\r?\n(.*?)(\r?\n## v|\z)") {
             $notes = $Matches[1].Trim()
           } else {
             $notes = "See commit history for changes."
           }
-          # Write to a temp file to safely pass multi-line content
           $notes | Out-File release_notes.txt -Encoding utf8
           Write-Output "Extracted release notes for v$ver"
 
-      # ── Create a new GitHub Release and upload the EXE ──────────────────────
+      # ── Create GitHub Release with both EXE and installer ───────────────────
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.TAG }}
           name: "KPI Assistant ${{ steps.ver.outputs.TAG }}"
           body_path: release_notes.txt
-          files: dist/KPI_Assistant.exe
+          files: |
+            dist/KPI_Assistant_Setup.exe
+            dist/KPI_Assistant.exe
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
