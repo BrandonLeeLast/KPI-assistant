@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.22
+- Fixed config tab scroll — replaced recursive child binding with enter/leave canvas bind_all approach
+- Fixed scroll breaking after using scrollbar — unbind_all on mouse leave prevents handler conflicts
+- Added return "break" to stop wheel events propagating to other handlers
+- Improved evidence txt file format — now includes filename, date, level, category, AI model, user context and STAR summary in structured layout
+
 ## v1.0.21
 - Fixed python3xx.dll not found after update — VBScript stub now cleans all stale _MEI PyInstaller folders from %TEMP% before relaunching
 

@@ -85,8 +85,28 @@ def _classify_and_file(file_path: str, filename: str, user_context: str,
     shutil.copy2(file_path, new_path)
 
     if category.lower() not in ["junk", "nocontext"]:
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(f"{new_path}.txt", "w", encoding="utf-8") as f:
-            f.write(f"USER CONTEXT: {user_context}\nAI SUMMARY ({provider}): {summary.strip()}")
+            f.write(
+                f"========================================\n"
+                f"KPI EVIDENCE SUMMARY\n"
+                f"========================================\n"
+                f"File      : {filename}\n"
+                f"Date      : {timestamp}\n"
+                f"Level     : {settings.get('MY_LEVEL', 'Unknown')}\n"
+                f"Category  : {category}\n"
+                f"AI Model  : {provider} / {model}\n"
+                f"----------------------------------------\n"
+                f"YOUR CONTEXT\n"
+                f"----------------------------------------\n"
+                f"{user_context.strip() if user_context.strip() else '(no context provided)'}\n"
+                f"----------------------------------------\n"
+                f"AI STAR SUMMARY\n"
+                f"----------------------------------------\n"
+                f"{summary.strip()}\n"
+                f"========================================\n"
+            )
         ui.log(f"✅ Filed → {category}", "success")
         ui.increment_stat("filed")
     else:

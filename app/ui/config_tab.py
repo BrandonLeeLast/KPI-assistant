@@ -46,9 +46,22 @@ def build(parent: ctk.CTkFrame, app) -> None:
     )
     scroll.pack(fill="both", expand=True, padx=20, pady=12)
 
-    # Mousewheel fix applied AFTER build — see bottom of this function
+    # Bind mousewheel to the canvas directly using enter/leave so it doesn't
+    # fight with the scrollbar or other widgets outside the scroll frame
     def _on_mousewheel(event):
         scroll._parent_canvas.yview_scroll(int(-3 * (event.delta / 120)), "units")
+        return "break"  # prevent event propagating to other handlers
+
+    def _on_enter(_):
+        scroll._parent_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+    def _on_leave(_):
+        scroll._parent_canvas.unbind_all("<MouseWheel>")
+
+    scroll._parent_canvas.bind("<Enter>", _on_enter)
+    scroll._parent_canvas.bind("<Leave>", _on_leave)
+    scroll.bind("<Enter>", _on_enter)
+    scroll.bind("<Leave>", _on_leave)
 
     # ── Helpers ───────────────────────────────────────────────────────────────
     def section(text: str, color: str = MAUVE) -> None:
@@ -417,11 +430,3 @@ def build(parent: ctk.CTkFrame, app) -> None:
         command=app.save_settings,
     ).pack(fill="x", pady=(6, 8))
 
-    # ── Bind mousewheel to every widget in the scroll frame ───────────────────
-    # Must run after all widgets are packed so winfo_children() is complete.
-    def _bind_all_mousewheel(widget):
-        widget.bind("<MouseWheel>", _on_mousewheel, add="+")
-        for child in widget.winfo_children():
-            _bind_all_mousewheel(child)
-
-    scroll.after(100, lambda: _bind_all_mousewheel(scroll))
