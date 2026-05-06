@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.26
+- Fixed Ollama model pull crash — charmap codec error on Windows from Docker output, now uses UTF-8 with errors=replace
+- Added ANSI escape code stripping from Docker pull progress output
+
 ## v1.0.25
 - Fixed "name BG2 is not defined" crash on startup — added missing BG2 import to config_tab.py
 - Fixed Python 3.14 syntax error in updater.py — VBScript stub now built with string concatenation instead of f-string to avoid quote/em-dash conflicts

@@ -170,19 +170,21 @@ def _setup_worker(model: str, on_log, on_done, on_error) -> None:
         log(f"⬇️  Pulling model '{model}' — this is a large download, please wait...")
         log("   (llava:13b ≈ 8GB, gemma3:12b ≈ 7GB — may take 10–30 mins)", "warn")
 
-        # Stream pull output so the user sees progress
+        # Stream pull output — force UTF-8 and replace undecodable chars
         try:
-            si = subprocess.STARTUPINFO()
             proc = subprocess.Popen(
                 ["docker", "exec", OLLAMA_CONTAINER, "ollama", "pull", model],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                text=True,
-                startupinfo=si,
+                encoding="utf-8",
+                errors="replace",   # replace undecodable bytes with ?
             )
             for line in proc.stdout:
                 line = line.strip()
                 if line:
+                    # Strip ANSI escape codes docker sometimes emits
+                    import re
+                    line = re.sub(r'\x1b\[[0-9;]*m', '', line)
                     log(f"   {line}", "info")
             proc.wait()
             if proc.returncode != 0:
