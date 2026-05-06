@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.20
+- Updated intermediate skills matrix
+- VBScript swap stub test release — verifying auto-update pipeline end-to-end
+
 ## v1.0.19
 - Replaced PowerShell swap stub with VBScript — wscript.exe is never blocked by execution policy or Windows zone restrictions unlike .ps1 files
 - Uses WMI Win32_Process to wait for PID death (more reliable than file lock polling)
