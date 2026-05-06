@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.18
+- AI Provider changed from radio buttons to dropdown
+- Model changed from text input to dropdown with known models per provider
+- "Other (type below)" option in model dropdown reveals a text input for custom model names
+- Model list updates automatically when switching provider
+- All selections persist to config.ini on Save
+
 ## v1.0.17
 - Fixed app not relaunching after update — $pid is a reserved PowerShell variable (current session PID), renamed to $appPid so the wait loop targets the correct process
 - Added swap.log in %APPDATA%/KPI-assistant/update/ for diagnosing future update issues

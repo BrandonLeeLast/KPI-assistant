@@ -2,7 +2,7 @@ import customtkinter as ctk
 import tkinter as tk
 from app.constants import (BG, SURFACE, SURFACE2, TEXT, SUBTEXT,
                             MAUVE, GREEN, RED, TEAL, BLUE, YELLOW, OVERLAY, HEADER_BG)
-from app.ai_provider import PROVIDERS, DEFAULT_MODELS
+from app.ai_provider import PROVIDERS, DEFAULT_MODELS, PROVIDER_MODELS
 from app.kpa_context import ALL_LEVELS
 
 
@@ -105,31 +105,93 @@ def build(parent: ctk.CTkFrame, app) -> None:
     # 1. AI PROVIDER
     # ══════════════════════════════════════════════════════════════════════════
     section("🤖  AI PROVIDER", MAUVE)
-    hint("Choose which AI processes your screenshots. Each requires its own API key.")
+    hint("Choose which AI processes your screenshots.")
 
-    provider_row = ctk.CTkFrame(scroll, fg_color="transparent")
-    provider_row.pack(fill="x", pady=(0, 4))
+    # ── Provider dropdown ─────────────────────────────────────────────────────
+    ctk.CTkLabel(scroll, text="Provider", text_color=SUBTEXT,
+                 font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(2, 0))
 
-    provider_var = app.provider_var
-    for name in PROVIDERS:
-        color  = {
-            "Gemini": MAUVE, "Claude": TEAL,
-            "OpenAI": GREEN, "Ollama": YELLOW,
-        }.get(name, SURFACE2)
-        rb = ctk.CTkRadioButton(
-            provider_row, text=name,
-            variable=provider_var, value=name,
-            fg_color=color, hover_color=color,
-            text_color=TEXT, font=ctk.CTkFont("Segoe UI", 11),
-        )
-        rb.pack(side="left", padx=(0, 20))
+    provider_menu = ctk.CTkOptionMenu(
+        scroll,
+        values=list(PROVIDERS.keys()),
+        variable=app.provider_var,
+        fg_color=SURFACE, button_color=MAUVE, button_hover_color="#b09de8",
+        dropdown_fg_color=SURFACE, dropdown_hover_color=SURFACE2,
+        text_color=TEXT, dropdown_text_color=TEXT,
+        font=ctk.CTkFont("Segoe UI", 12), dropdown_font=ctk.CTkFont("Segoe UI", 11),
+        corner_radius=8, height=34,
+    )
+    provider_menu.pack(fill="x", pady=(0, 4))
 
-    # Model field — auto-fills when provider changes
+    # ── Model dropdown + custom text input ───────────────────────────────────
     ctk.CTkLabel(scroll, text="Model", text_color=SUBTEXT,
                  font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(2, 0))
-    entry(app.model_var, placeholder="e.g. gemini-2.0-flash / claude-opus-4-5 / gpt-4o")
 
-    # API Key
+    # Internal var for the dropdown selection — separate from app.model_var
+    # so "Other (type below)" doesn't overwrite the real model name
+    _model_choice = tk.StringVar()
+
+    model_menu = ctk.CTkOptionMenu(
+        scroll,
+        values=[""],
+        variable=_model_choice,
+        fg_color=SURFACE, button_color=SURFACE2, button_hover_color="#585b70",
+        dropdown_fg_color=SURFACE, dropdown_hover_color=SURFACE2,
+        text_color=TEXT, dropdown_text_color=TEXT,
+        font=ctk.CTkFont("Segoe UI", 12), dropdown_font=ctk.CTkFont("Segoe UI", 11),
+        corner_radius=8, height=34,
+    )
+    model_menu.pack(fill="x", pady=(0, 2))
+
+    # Custom model text input — shown when "Other" is selected
+    custom_model_entry = ctk.CTkEntry(
+        scroll, textvariable=app.model_var,
+        fg_color=SURFACE, border_color=MAUVE, border_width=1,
+        text_color=TEXT, placeholder_text="Type custom model name…",
+        placeholder_text_color=OVERLAY,
+        font=ctk.CTkFont("Segoe UI", 11), corner_radius=8, height=34,
+    )
+
+    def _on_model_choice(*_):
+        choice = _model_choice.get()
+        if choice == "Other (type below)":
+            custom_model_entry.pack(fill="x", pady=(0, 2))
+            # Don't overwrite model_var — let user type
+        else:
+            custom_model_entry.pack_forget()
+            if choice:
+                app.model_var.set(choice)
+
+    _model_choice.trace_add("write", _on_model_choice)
+
+    def _update_model_dropdown(*_):
+        """Refresh model list when provider changes."""
+        provider_key = PROVIDERS.get(app.provider_var.get(), "gemini")
+        models = PROVIDER_MODELS.get(provider_key, ["Other (type below)"])
+        model_menu.configure(values=models)
+
+        current = app.model_var.get()
+        if current in models:
+            _model_choice.set(current)
+            custom_model_entry.pack_forget()
+        else:
+            _model_choice.set("Other (type below)")
+            custom_model_entry.pack(fill="x", pady=(0, 2))
+
+        # Auto-fill default if model is blank or was a different provider's default
+        if not current or current in DEFAULT_MODELS.values():
+            default = DEFAULT_MODELS.get(provider_key, "")
+            app.model_var.set(default)
+            if default in models:
+                _model_choice.set(default)
+                custom_model_entry.pack_forget()
+
+    app.provider_var.trace_add("write", _update_model_dropdown)
+
+    # Initialise dropdown for current provider on first build
+    scroll.after(50, _update_model_dropdown)
+
+    # ── API Key ───────────────────────────────────────────────────────────────
     ctk.CTkLabel(scroll, text="API Key", text_color=SUBTEXT,
                  font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(4, 0))
 
@@ -140,7 +202,7 @@ def build(parent: ctk.CTkFrame, app) -> None:
         key_row, textvariable=app.api_key_var,
         fg_color=SURFACE, border_color=SURFACE2,
         text_color=TEXT, font=ctk.CTkFont("Segoe UI", 12),
-        corner_radius=8, height=38, border_width=1, show="•",
+        corner_radius=8, height=34, border_width=1, show="•",
     )
     key_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
 
@@ -153,17 +215,7 @@ def build(parent: ctk.CTkFrame, app) -> None:
         font=ctk.CTkFont("Segoe UI", 10), command=_toggle_show, width=60,
     ).pack(side="right")
 
-    # Ollama note
-    hint("For Ollama: leave API Key blank or enter your server URL (default: http://localhost:11434)")
-
-    # Auto-fill model when provider radio changes
-    def _on_provider_change(*_):
-        from app.ai_provider import DEFAULT_MODELS, PROVIDERS
-        key  = PROVIDERS.get(provider_var.get(), "gemini")
-        default = DEFAULT_MODELS.get(key, "")
-        if not app.model_var.get() or app.model_var.get() in DEFAULT_MODELS.values():
-            app.model_var.set(default)
-    provider_var.trace_add("write", _on_provider_change)
+    hint("For Ollama: leave API Key blank or set to your server URL (http://localhost:11434)")
 
     divider()
 

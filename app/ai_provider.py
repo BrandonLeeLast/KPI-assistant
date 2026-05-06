@@ -33,6 +33,39 @@ DEFAULT_MODELS: dict[str, str] = {
     "ollama": "llava",
 }
 
+# Known models per provider shown in the dropdown
+PROVIDER_MODELS: dict[str, list[str]] = {
+    "gemini": [
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+        "Other (type below)",
+    ],
+    "claude": [
+        "claude-opus-4-5",
+        "claude-sonnet-4-5",
+        "claude-haiku-4-5",
+        "claude-opus-4-7",
+        "Other (type below)",
+    ],
+    "openai": [
+        "gpt-4o",
+        "gpt-4o-mini",
+        "gpt-4-turbo",
+        "gpt-3.5-turbo",
+        "Other (type below)",
+    ],
+    "ollama": [
+        "llava",
+        "llava:13b",
+        "llava:34b",
+        "llava-llama3",
+        "moondream",
+        "Other (type below)",
+    ],
+}
+
 
 def classify(image_path: str, instructions: str, provider: str,
              api_key: str, model: str) -> str:
