@@ -77,6 +77,10 @@ jobs:
           choco install innosetup --no-progress -y
           echo "Inno Setup installed"
 
+      - name: Generate installer assets
+        shell: pwsh
+        run: python installer/make_assets.py
+
       - name: Build installer
         shell: pwsh
         run: |
@@ -114,7 +118,6 @@ jobs:
           body_path: release_notes.txt
           files: |
             dist/KPI_Assistant_Setup.exe
-            dist/KPI_Assistant.exe
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

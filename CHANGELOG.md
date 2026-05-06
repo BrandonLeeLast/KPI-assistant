@@ -1,17 +1,16 @@
 # Changelog
 
 ## v1.0.26
-- Fixed Ollama model pull crash — charmap codec error on Windows from Docker output, now uses UTF-8 with errors=replace
-- Added ANSI escape code stripping from Docker pull progress output
-
-## v1.0.26
 - Switched to proper Inno Setup Windows installer — installs to %LocalAppData%\Programs\KPI-assistant
 - No UAC prompt required (user-level install)
 - Creates Start Menu shortcut + optional Desktop shortcut
 - Registers in Add/Remove Programs with uninstaller
 - Auto-updater now downloads KPI_Assistant_Setup.exe and runs /VERYSILENT — Inno Setup handles kill, install, relaunch
 - Removed all VBScript/bat swap logic — no more file lock, permission, or zone flag issues
-- CI now builds both KPI_Assistant.exe and KPI_Assistant_Setup.exe on every push
+- Only installer published to GitHub Releases — raw EXE removed
+- Fixed Inno Setup version directive — version injected via /DMyAppVersion at build time
+- Custom wizard branding: dark Catppuccin panel, header icon, app .ico — generated in CI via Pillow
+- Fixed Ollama model pull charmap crash — UTF-8 with errors=replace, ANSI codes stripped
 
 ## v1.0.25
 - Fixed "name BG2 is not defined" crash on startup — added missing BG2 import to config_tab.py

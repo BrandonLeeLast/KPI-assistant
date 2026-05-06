@@ -1,11 +1,4 @@
 ; KPI Assistant — Inno Setup installer script
-; Builds a proper Windows installer that:
-;   - Installs to %LocalAppData%\Programs\KPI-assistant (no UAC required)
-;   - Creates Start Menu shortcut
-;   - Optionally creates Desktop shortcut
-;   - Registers in Add/Remove Programs with uninstaller
-;   - Supports silent install via /SILENT or /VERYSILENT flags
-;   - Works with the app's auto-updater (downloads new Setup EXE, runs /VERYSILENT)
 
 #define MyAppName      "KPI Assistant"
 #define MyAppPublisher "Brandon Lee"
@@ -26,9 +19,7 @@ AppUpdatesURL={#MyAppURL}
 ; Install to LocalAppData\Programs — no UAC prompt needed
 DefaultDirName={localappdata}\Programs\KPI-assistant
 DefaultGroupName={#MyAppName}
-; Allow user to choose install dir
 DisableDirPage=no
-; Desktop shortcut page
 AllowNoIcons=yes
 ; Output
 OutputDir=..\dist
@@ -36,45 +27,47 @@ OutputBaseFilename=KPI_Assistant_Setup
 ; Compression
 Compression=lzma2/ultra64
 SolidCompression=yes
-; Appearance
+; Branding
 WizardStyle=modern
-; No UAC elevation needed (user-level install)
-PrivilegesRequired=lowest
-; Uninstall
-UninstallDisplayName={#MyAppName}
+WizardImageFile=wizard.bmp
+WizardSmallImageFile=wizard_small.bmp
+SetupIconFile=app_icon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
-; Version info
+; No UAC
+PrivilegesRequired=lowest
+; Add/Remove Programs
+UninstallDisplayName={#MyAppName}
+; Version info embedded in Setup EXE
 VersionInfoVersion={#MyAppVersion}
 VersionInfoCompany={#MyAppPublisher}
-VersionInfoDescription={#MyAppName} Installer
+VersionInfoDescription={#MyAppName} Setup
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Messages]
+WelcomeLabel1=Welcome to KPI Assistant Setup
+WelcomeLabel2=Born to explore the cosmos. Forced to watch C:\Users\User\KPI_Proof.%n%nThis wizard will install KPI Assistant on your computer. Click Next to continue.
+FinishedLabel=KPI Assistant has been installed. Your evidence folder awaits.%n%nBorn to explore the cosmos. Forced to watch KPI_Proof.
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional icons:"; Flags: unchecked
 
 [Files]
-; Main EXE
 Source: "..\dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-; Start Menu
-Name: "{group}\{#MyAppName}";        Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\{#MyAppName}";           Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
-; Desktop (optional, unchecked by default)
-Name: "{autodesktop}\{#MyAppName}";  Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}";     Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-; Offer to launch after install
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
-; Kill the app if running before uninstall
 Filename: "taskkill.exe"; Parameters: "/f /im {#MyAppExeName}"; Flags: runhidden; RunOnceId: "KillApp"
 
 [Code]
-// Kill any running instance before upgrading (silent installs)
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
