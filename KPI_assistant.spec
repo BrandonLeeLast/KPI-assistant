@@ -27,6 +27,7 @@ a = Analysis(
         'app.ui.widgets',
         'app.ui.context_dialog',
         'app.ai_provider',
+        'app.ollama_setup',
         'app.kpa_context',
         'anthropic',
         'openai',

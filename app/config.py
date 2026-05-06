@@ -17,7 +17,7 @@ def get_default_config() -> configparser.ConfigParser:
         # ── AI Provider ───────────────────────────────────────────────────────
         'AI_PROVIDER':   'Gemini',
         'API_KEY':       'YOUR_API_KEY_HERE',
-        'AI_MODEL':      'gemini-2.0-flash',
+        'AI_MODEL':      'gemini-2.5-flash',
 
         # ── Legacy key kept so old configs still load cleanly ─────────────────
         'GEMINI_API_KEY': 'YOUR_API_KEY_HERE',

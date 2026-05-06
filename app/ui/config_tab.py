@@ -230,6 +230,83 @@ def build(parent: ctk.CTkFrame, app) -> None:
 
     hint("For Ollama: leave API Key blank or set to your server URL (http://localhost:11434)")
 
+    # ── Ollama setup panel — only visible when Ollama is selected ─────────────
+    ollama_panel = ctk.CTkFrame(scroll, fg_color=BG2, corner_radius=10)
+
+    # Status indicators
+    status_row = ctk.CTkFrame(ollama_panel, fg_color="transparent")
+    status_row.pack(fill="x", padx=12, pady=(10, 4))
+
+    lbl_docker    = ctk.CTkLabel(status_row, text="⬤ Docker", text_color=OVERLAY,
+                                  font=ctk.CTkFont("Segoe UI", 10))
+    lbl_docker.pack(side="left", padx=(0, 12))
+    lbl_container = ctk.CTkLabel(status_row, text="⬤ Container", text_color=OVERLAY,
+                                  font=ctk.CTkFont("Segoe UI", 10))
+    lbl_container.pack(side="left", padx=(0, 12))
+    lbl_api       = ctk.CTkLabel(status_row, text="⬤ API", text_color=OVERLAY,
+                                  font=ctk.CTkFont("Segoe UI", 10))
+    lbl_api.pack(side="left")
+
+    # Setup log output
+    setup_log = ctk.CTkTextbox(
+        ollama_panel, height=100,
+        fg_color=BG, border_width=0,
+        text_color=SUBTEXT, font=ctk.CTkFont("Consolas", 9),
+        corner_radius=0, wrap="word", state="disabled",
+    )
+    setup_log.pack(fill="x", padx=12, pady=(0, 6))
+
+    btn_row = ctk.CTkFrame(ollama_panel, fg_color="transparent")
+    btn_row.pack(fill="x", padx=12, pady=(0, 10))
+
+    btn_setup = ctk.CTkButton(
+        btn_row, text="⚙  Setup Ollama",
+        fg_color=TEAL, hover_color="#78c9bf", text_color=HEADER_BG,
+        font=ctk.CTkFont("Segoe UI", 11, weight="bold"),
+        corner_radius=8, height=34,
+        command=lambda: app.run_ollama_setup(
+            app.model_var.get(), _ollama_log, _ollama_done, _ollama_error,
+            btn_setup, lbl_docker, lbl_container, lbl_api
+        ),
+    )
+    btn_setup.pack(side="left")
+
+    ctk.CTkButton(
+        btn_row, text="↺  Refresh Status",
+        fg_color=SURFACE2, hover_color="#585b70", text_color=TEXT,
+        font=ctk.CTkFont("Segoe UI", 10), corner_radius=8, height=34, width=120,
+        command=lambda: app.refresh_ollama_status(lbl_docker, lbl_container, lbl_api),
+    ).pack(side="left", padx=(8, 0))
+
+    def _ollama_log(msg, level="info"):
+        color = {
+            "success": GREEN, "warn": YELLOW, "error": RED
+        }.get(level, SUBTEXT)
+        setup_log.configure(state="normal")
+        setup_log.insert(tk.END, f"{msg}\n")
+        setup_log.see(tk.END)
+        setup_log.configure(state="disabled")
+
+    def _ollama_done():
+        btn_setup.configure(text="✅  Ollama Ready", fg_color=GREEN,
+                            text_color=HEADER_BG, state="normal")
+        app.refresh_ollama_status(lbl_docker, lbl_container, lbl_api)
+
+    def _ollama_error(msg):
+        import tkinter.messagebox as mb
+        btn_setup.configure(state="normal", text="⚙  Setup Ollama")
+        mb.showerror("Ollama Setup Failed", msg)
+
+    def _toggle_ollama_panel(*_):
+        if app.provider_var.get() == "Ollama":
+            ollama_panel.pack(fill="x", pady=(4, 2))
+            app.refresh_ollama_status(lbl_docker, lbl_container, lbl_api)
+        else:
+            ollama_panel.pack_forget()
+
+    app.provider_var.trace_add("write", _toggle_ollama_panel)
+    scroll.after(80, _toggle_ollama_panel)
+
     divider()
 
     # ══════════════════════════════════════════════════════════════════════════

@@ -27,19 +27,24 @@ PROVIDERS: dict[str, str] = {
 }
 
 DEFAULT_MODELS: dict[str, str] = {
-    "gemini": "gemini-2.0-flash",
+    "gemini": "gemini-2.5-flash",
     "claude": "claude-opus-4-5",
     "openai": "gpt-4o",
-    "ollama": "llava",
+    "ollama": "llava:13b",
 }
 
 # Known models per provider shown in the dropdown
+# Gemini models verified against ai.google.dev/gemini-api/docs/models (May 2026)
 PROVIDER_MODELS: dict[str, list[str]] = {
     "gemini": [
-        "gemini-2.0-flash",
-        "gemini-2.0-flash-lite",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
+        # Free tier (recommended)
+        "gemini-2.5-flash",          # best free tier, multimodal
+        "gemini-2.5-flash-lite",     # fastest, budget friendly
+        "gemini-3-flash-preview",    # latest preview, free tier
+        "gemini-3.1-flash-lite-preview",
+        # Paid
+        "gemini-2.5-pro",            # advanced reasoning, billing required
+        "gemini-3.1-pro-preview",    # billing required
         "Other (type below)",
     ],
     "claude": [
@@ -57,11 +62,12 @@ PROVIDER_MODELS: dict[str, list[str]] = {
         "Other (type below)",
     ],
     "ollama": [
-        "llava",
-        "llava:13b",
-        "llava:34b",
-        "llava-llama3",
-        "moondream",
+        "llava:13b",       # 8GB — best quality vision, recommended
+        "gemma3:12b",      # 7GB — Google Gemma 3 multimodal, free
+        "llava:7b",        # 4GB — lighter option
+        "llava:34b",       # 20GB — highest quality, needs lots of RAM
+        "llava-llama3",    # 5GB — good balance
+        "moondream",       # 1.7GB — fastest, lower quality
         "Other (type below)",
     ],
 }

@@ -18,6 +18,7 @@ from app.ui.capture_overlay import launch_overlay
 from app.ui.widgets import PulseIndicator
 from app.ui import dashboard as dashboard_builder
 from app.ui import config_tab as config_tab_builder
+from app.ollama_setup import setup_ollama, get_status
 
 # Lock CustomTkinter to dark mode — app has its own palette
 ctk.set_appearance_mode("dark")
@@ -256,6 +257,44 @@ class KPIDashboardApp(ctk.CTk):
         path = filedialog.askdirectory()
         if path:
             var.set(path.replace('\\', '/'))
+
+    # ── OLLAMA SETUP ──────────────────────────────────────────────────────────
+    def run_ollama_setup(self, model, on_log, on_done, on_error,
+                         btn, lbl_docker, lbl_container, lbl_api) -> None:
+        btn.configure(state="disabled", text="⏳  Setting up…")
+        self.log(f"🐳 Starting Ollama setup for model: {model}", "info")
+
+        def _done():
+            self.after(0, on_done)
+            self.after(0, lambda: self.log("🎉 Ollama setup complete!", "success"))
+
+        def _error(msg):
+            self.after(0, lambda: on_error(msg))
+            self.after(0, lambda: self.log(f"❌ Ollama setup failed: {msg}", "error"))
+
+        def _log(msg, level="info"):
+            self.after(0, lambda: on_log(msg, level))
+
+        setup_ollama(model, _log, _done, _error)
+
+    def refresh_ollama_status(self, lbl_docker, lbl_container, lbl_api) -> None:
+        def _check():
+            status = get_status()
+            def _update():
+                lbl_docker.configure(
+                    text="⬤ Docker",
+                    text_color="#a6e3a1" if status["docker"] else "#f38ba8"
+                )
+                lbl_container.configure(
+                    text="⬤ Container",
+                    text_color="#a6e3a1" if status["container"] else "#f38ba8"
+                )
+                lbl_api.configure(
+                    text="⬤ API",
+                    text_color="#a6e3a1" if status["api"] else "#f38ba8"
+                )
+            self.after(0, _update)
+        threading.Thread(target=_check, daemon=True).start()
 
     def open_evidence_folder(self) -> None:
         path = self.evidence_folder_var.get()

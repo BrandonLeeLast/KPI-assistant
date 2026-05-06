@@ -46,9 +46,22 @@ def process_file(file_path: str, settings, ui) -> None:
             ui.notify(f"Filed under: {category}", "KPI Assistant")
 
     except Exception as e:
-        ui.log(f"❌ Analysis error: {e}", "error")
+        err = str(e)
+        if "429" in err or "RESOURCE_EXHAUSTED" in err:
+            ui.log("❌ Rate limit hit — you've exceeded the free tier quota for this model.", "error")
+            ui.log("💡 Try: switch to gemini-2.5-flash-lite in Configuration, or wait 24h, or add billing to your Google account.", "warn")
+            ui.notify("Rate limit hit — see log for options", "KPI Assistant")
+        elif "404" in err or "NOT_FOUND" in err:
+            ui.log(f"❌ Model not found — '{settings.get('AI_MODEL')}' is invalid or unavailable.", "error")
+            ui.log("💡 Go to Configuration and select a valid model from the dropdown.", "warn")
+            ui.notify("Invalid model — check Configuration", "KPI Assistant")
+        elif "401" in err or "API_KEY" in err.upper() or "PERMISSION" in err:
+            ui.log("❌ Invalid API key — check your key in Configuration.", "error")
+            ui.notify("Invalid API key", "KPI Assistant")
+        else:
+            ui.log(f"❌ Analysis error: {e}", "error")
+            ui.notify(f"Failed to process {filename}", "KPI Assistant")
         ui.increment_stat("errors")
-        ui.notify(f"Failed to process {filename}", "KPI Assistant")
 
 
 def _classify_and_file(file_path: str, filename: str, user_context: str,

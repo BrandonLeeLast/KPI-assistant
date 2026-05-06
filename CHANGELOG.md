@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.0.23
+- Fixed python3xx.dll not found on launch — main.py now cleans all stale _MEI PyInstaller folders from TEMP on startup
+- Added one-click Ollama setup in Configuration tab — appears automatically when Ollama is selected as provider
+- Setup handles: Docker check, image pull, container creation, model download, API verification — all in background
+- Live log output shows each step with progress
+- Status indicators (Docker / Container / API) show green/red in real time
+- Refresh Status button to check Ollama state without running setup again
+- Container created with --restart always so it starts automatically with Docker
+- Updated Gemini model list to verified working models — removed gemini-1.5-pro/1.5-flash which return 404
+- Default Gemini model changed to gemini-2.5-flash (free tier, multimodal)
+- Added clear error messages for 429 rate limit, 404 model not found, and 401 invalid key with actionable tips
+
 ## v1.0.22
 - Fixed config tab scroll — replaced recursive child binding with enter/leave canvas bind_all approach
 - Fixed scroll breaking after using scrollbar — unbind_all on mouse leave prevents handler conflicts
