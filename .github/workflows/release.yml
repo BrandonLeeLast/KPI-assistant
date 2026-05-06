@@ -81,7 +81,8 @@ jobs:
         shell: pwsh
         run: |
           $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-          & $iscc "installer\setup.iss"
+          $ver  = "${{ steps.ver.outputs.VERSION }}"
+          & $iscc "installer\setup.iss" "/DMyAppVersion=$ver"
           if (-not (Test-Path "dist\KPI_Assistant_Setup.exe")) {
             Write-Error "Installer build failed — dist\KPI_Assistant_Setup.exe not found"
             exit 1

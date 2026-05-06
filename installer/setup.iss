@@ -11,7 +11,9 @@
 #define MyAppPublisher "Brandon Lee"
 #define MyAppURL       "https://github.com/BrandonLeeLast/KPI-assistant"
 #define MyAppExeName   "KPI_Assistant.exe"
-#define MyAppVersion   GetFileVersion("..\dist\KPI_Assistant.exe")
+#ifndef MyAppVersion
+  #define MyAppVersion "1.0.0"
+#endif
 
 [Setup]
 AppId={{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}
@@ -36,7 +38,6 @@ Compression=lzma2/ultra64
 SolidCompression=yes
 ; Appearance
 WizardStyle=modern
-WizardSmallImageFile=icon_small.bmp
 ; No UAC elevation needed (user-level install)
 PrivilegesRequired=lowest
 ; Uninstall
