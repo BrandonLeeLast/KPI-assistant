@@ -143,35 +143,51 @@ def _write_swap_stub(pid: int, current_exe: str) -> None:
       3. Relaunches the updated EXE
       4. Deletes itself
     """
+    log_path = os.path.join(_UPDATE_DIR, "swap.log")
     stub = f"""
 # KPI Assistant swap stub — auto-generated, do not edit
-$pid      = {pid}
+# NOTE: avoid $pid — reserved in PowerShell for the current session PID
+$appPid   = {pid}
 $oldExe   = '{current_exe.replace("'", "''")}'
 $newExe   = '{_STAGED_EXE.replace("'", "''")}'
+$logFile  = '{log_path.replace("'", "''")}'
 $stubSelf = $MyInvocation.MyCommand.Path
 
+function Log($msg) {{
+    $ts = Get-Date -Format 'HH:mm:ss'
+    Add-Content -Path $logFile -Value "[$ts] $msg"
+}}
+
+Log "Swap stub started. Waiting for app PID $appPid to exit..."
+
 # Wait for the app process to fully exit
-while (Get-Process -Id $pid -ErrorAction SilentlyContinue) {{
+while (Get-Process -Id $appPid -ErrorAction SilentlyContinue) {{
     Start-Sleep -Milliseconds 200
 }}
 
-# Extra settle time for Python/CTk teardown to flush handles
-Start-Sleep -Milliseconds 800
+Log "App process exited. Settling 1s..."
+Start-Sleep -Milliseconds 1000
 
-# Atomic rename: Move-Item on the same NTFS volume is a rename — no copy
+# Swap the EXE
 try {{
     Move-Item -Path $newExe -Destination $oldExe -Force
+    Log "Move-Item succeeded."
 }} catch {{
-    # If rename fails (cross-volume or antivirus hold), fall back to copy+delete
+    Log "Move-Item failed: $_ — trying Copy-Item fallback."
     Copy-Item -Path $newExe -Destination $oldExe -Force
     Remove-Item -Path $newExe -Force -ErrorAction SilentlyContinue
+    Log "Copy-Item fallback done."
 }}
 
-# Relaunch updated EXE
-Start-Process -FilePath $oldExe
+if (Test-Path $oldExe) {{
+    Log "EXE in place. Relaunching: $oldExe"
+    Start-Process -FilePath $oldExe
+}} else {{
+    Log "ERROR: EXE not found at $oldExe after swap!"
+}}
 
-# Self-destruct
 Start-Sleep -Milliseconds 500
+Log "Stub complete. Self-destructing."
 Remove-Item -Path $stubSelf -Force -ErrorAction SilentlyContinue
 """
     with open(_STUB_PATH, "w", encoding="utf-8") as f:

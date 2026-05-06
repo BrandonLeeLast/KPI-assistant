@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.17
+- Fixed app not relaunching after update — $pid is a reserved PowerShell variable (current session PID), renamed to $appPid so the wait loop targets the correct process
+- Added swap.log in %APPDATA%/KPI-assistant/update/ for diagnosing future update issues
+
 ## v1.0.16
 - Fixed update progress window not closable — X button now shows cancel confirmation during download, closes cleanly after
 - Fixed process not dying after update — app.destroy() + os._exit(0) guarantees process terminates so PS1 stub PID-wait exits correctly
