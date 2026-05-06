@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.21
+- Fixed python3xx.dll not found after update — VBScript stub now cleans all stale _MEI PyInstaller folders from %TEMP% before relaunching
+
 ## v1.0.20
 - Updated intermediate skills matrix
 - VBScript swap stub test release — verifying auto-update pipeline end-to-end

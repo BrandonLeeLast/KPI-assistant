@@ -182,6 +182,24 @@ Loop
 Log "PID gone. Settling 1 second..."
 WScript.Sleep 1000
 
+' Clean up ALL stale _MEI PyInstaller extraction folders in %TEMP%
+' These cause "python3xx.dll not found" on the next launch if left behind
+Dim tempDir, meiFolder
+tempDir = shell.ExpandEnvironmentStrings("%TEMP%")
+On Error Resume Next
+Dim tempFolders
+Set tempFolders = fso.GetFolder(tempDir).SubFolders
+Dim tf
+For Each tf In tempFolders
+    If Left(tf.Name, 4) = "_MEI" Then
+        Log "Removing stale MEI folder: " & tf.Name
+        fso.DeleteFolder tf.Path, True
+    End If
+Next
+On Error GoTo 0
+Log "MEI cleanup done. Settling 500ms..."
+WScript.Sleep 500
+
 ' Swap the EXE
 Dim swapOk
 swapOk = False
