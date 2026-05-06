@@ -144,93 +144,106 @@ def _write_swap_stub(pid: int, current_exe: str) -> None:
     log_path   = os.path.join(_UPDATE_DIR, "swap.log")
     update_dir = _UPDATE_DIR
 
-    stub = f"""' KPI Assistant swap stub — auto-generated
-Dim appPid, oldExe, newExe, logFile, updateDir
-appPid    = {pid}
-oldExe    = "{current_exe}"
-newExe    = "{_STAGED_EXE}"
-logFile   = "{log_path}"
-updateDir = "{update_dir}"
-
-Dim fso, shell
-Set fso   = CreateObject("Scripting.FileSystemObject")
-Set shell = CreateObject("WScript.Shell")
-
-Sub Log(msg)
-    Dim f
-    Set f = fso.OpenTextFile(logFile, 8, True)
-    f.WriteLine Now & " " & msg
-    f.Close
-End Sub
-
-Log "Swap stub started. Waiting for PID " & appPid & " to exit..."
-
-' Wait for the app process to fully die using WMI
-Dim wmi, done
-Set wmi = GetObject("winmgmts://./root/cimv2")
-done = False
-Do While Not done
-    Dim procs
-    Set procs = wmi.ExecQuery("SELECT * FROM Win32_Process WHERE ProcessId=" & appPid)
-    If procs.Count = 0 Then
-        done = True
-    Else
-        WScript.Sleep 200
-    End If
-Loop
-
-Log "PID gone. Settling 1 second..."
-WScript.Sleep 1000
-
-' Clean up ALL stale _MEI PyInstaller extraction folders in %TEMP%
-' These cause "python3xx.dll not found" on the next launch if left behind
-Dim tempDir, meiFolder
-tempDir = shell.ExpandEnvironmentStrings("%TEMP%")
-On Error Resume Next
-Dim tempFolders
-Set tempFolders = fso.GetFolder(tempDir).SubFolders
-Dim tf
-For Each tf In tempFolders
-    If Left(tf.Name, 4) = "_MEI" Then
-        Log "Removing stale MEI folder: " & tf.Name
-        fso.DeleteFolder tf.Path, True
-    End If
-Next
-On Error GoTo 0
-Log "MEI cleanup done. Settling 500ms..."
-WScript.Sleep 500
-
-' Swap the EXE
-Dim swapOk
-swapOk = False
-On Error Resume Next
-
-fso.CopyFile newExe, oldExe, True
-If Err.Number = 0 Then
-    Log "CopyFile succeeded."
-    fso.DeleteFile newExe, True
-    swapOk = True
-Else
-    Log "CopyFile failed: " & Err.Description
-    Err.Clear
-End If
-
-On Error GoTo 0
-
-If swapOk And fso.FileExists(oldExe) Then
-    Log "EXE in place. Relaunching: " & oldExe
-    shell.Run Chr(34) & oldExe & Chr(34), 1, False
-Else
-    Log "ERROR: Swap failed. Opening update folder for manual copy."
-    shell.Run "explorer.exe " & Chr(34) & updateDir & Chr(34), 1, False
-End If
-
-WScript.Sleep 500
-Log "Stub complete."
-
-' Self-destruct
-fso.DeleteFile WScript.ScriptFullName, True
-"""
+    # Build VBScript as plain string concatenation — avoids f-string/quote conflicts
+    q = '"'  # double-quote shorthand for embedding in VBScript strings
+    stub = (
+        "Dim appPid, oldExe, newExe, logFile, updateDir\n"
+        f"appPid    = {pid}\n"
+        f"oldExe    = {q}{current_exe}{q}\n"
+        f"newExe    = {q}{_STAGED_EXE}{q}\n"
+        f"logFile   = {q}{log_path}{q}\n"
+        f"updateDir = {q}{update_dir}{q}\n"
+        "\n"
+        "Dim fso, shell\n"
+        "Set fso   = CreateObject(\"Scripting.FileSystemObject\")\n"
+        "Set shell = CreateObject(\"WScript.Shell\")\n"
+        "\n"
+        "Sub Log(msg)\n"
+        "    Dim f\n"
+        "    Set f = fso.OpenTextFile(logFile, 8, True)\n"
+        "    f.WriteLine Now & \" \" & msg\n"
+        "    f.Close\n"
+        "End Sub\n"
+        "\n"
+        "Log \"Swap stub started. Waiting for PID \" & appPid & \" to exit...\"\n"
+        "\n"
+        "Dim wmi, done\n"
+        "Set wmi = GetObject(\"winmgmts://./root/cimv2\")\n"
+        "done = False\n"
+        "Do While Not done\n"
+        "    Dim procs\n"
+        "    Set procs = wmi.ExecQuery(\"SELECT * FROM Win32_Process WHERE ProcessId=\" & appPid)\n"
+        "    If procs.Count = 0 Then\n"
+        "        done = True\n"
+        "    Else\n"
+        "        WScript.Sleep 200\n"
+        "    End If\n"
+        "Loop\n"
+        "\n"
+        "Log \"PID gone. Settling 1 second...\"\n"
+        "WScript.Sleep 1000\n"
+        "\n"
+        "Dim tempDir\n"
+        "tempDir = shell.ExpandEnvironmentStrings(\"%TEMP%\")\n"
+        "On Error Resume Next\n"
+        "Dim tempFolders\n"
+        "Set tempFolders = fso.GetFolder(tempDir).SubFolders\n"
+        "Dim tf\n"
+        "For Each tf In tempFolders\n"
+        "    If Left(tf.Name, 4) = \"_MEI\" Then\n"
+        "        Log \"Removing stale MEI folder: \" & tf.Name\n"
+        "        fso.DeleteFolder tf.Path, True\n"
+        "    End If\n"
+        "Next\n"
+        "On Error GoTo 0\n"
+        "Log \"MEI cleanup done. Settling 500ms...\"\n"
+        "WScript.Sleep 500\n"
+        "\n"
+        "shell.Run \"cmd.exe /c echo.>\"\"\" & newExe & \":Zone.Identifier\"\"\"\", 0, True\n"
+        "Log \"Zone identifier cleared.\"\n"
+        "\n"
+        "Dim swapOk, copyCmd, copyRet\n"
+        "swapOk  = False\n"
+        "copyCmd = \"cmd.exe /c copy /y \"\"\" & newExe & \"\"\" \"\"\" & oldExe & \"\"\"\"\n"
+        "copyRet = shell.Run(copyCmd, 0, True)\n"
+        "\n"
+        "If copyRet = 0 Then\n"
+        "    Log \"cmd copy succeeded.\"\n"
+        "    On Error Resume Next\n"
+        "    fso.DeleteFile newExe, True\n"
+        "    On Error GoTo 0\n"
+        "    swapOk = True\n"
+        "Else\n"
+        "    Log \"cmd copy failed (exit \" & copyRet & \") - trying robocopy...\"\n"
+        "    Dim srcDir, dstDir, fileName, roboCmd, roboRet\n"
+        "    srcDir   = fso.GetParentFolderName(newExe)\n"
+        "    dstDir   = fso.GetParentFolderName(oldExe)\n"
+        "    fileName = fso.GetFileName(newExe)\n"
+        "    roboCmd  = \"cmd.exe /c robocopy \"\"\" & srcDir & \"\"\" \"\"\" & dstDir & \"\"\" \"\"\" & fileName & \"\"\" /COPYALL /R:2 /W:1 /NFL /NDL /NJH /NJS\"\n"
+        "    roboRet  = shell.Run(roboCmd, 0, True)\n"
+        "    If roboRet <= 1 Then\n"
+        "        Log \"robocopy succeeded (exit \" & roboRet & \").\"\n"
+        "        On Error Resume Next\n"
+        "        fso.DeleteFile newExe, True\n"
+        "        On Error GoTo 0\n"
+        "        swapOk = True\n"
+        "    Else\n"
+        "        Log \"robocopy failed (exit \" & roboRet & \"). All methods exhausted.\"\n"
+        "    End If\n"
+        "End If\n"
+        "\n"
+        "If swapOk And fso.FileExists(oldExe) Then\n"
+        "    Log \"EXE in place. Relaunching: \" & oldExe\n"
+        "    shell.Run Chr(34) & oldExe & Chr(34), 1, False\n"
+        "Else\n"
+        "    Log \"ERROR: Swap failed. Opening update folder for manual copy.\"\n"
+        "    shell.Run \"explorer.exe \" & Chr(34) & updateDir & Chr(34), 1, False\n"
+        "End If\n"
+        "\n"
+        "WScript.Sleep 500\n"
+        "Log \"Stub complete.\"\n"
+        "fso.DeleteFile WScript.ScriptFullName, True\n"
+    )
     with open(_STUB_PATH, "w", encoding="utf-8") as f:
         f.write(stub.strip())
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.25
+- Fixed "name BG2 is not defined" crash on startup — added missing BG2 import to config_tab.py
+- Fixed Python 3.14 syntax error in updater.py — VBScript stub now built with string concatenation instead of f-string to avoid quote/em-dash conflicts
+- Fixed Permission denied on CopyFile — swap now uses cmd /c copy then robocopy as fallbacks
+- Added Zone.Identifier strip before copy to unblock downloaded EXEs
+
+## v1.0.24
+- Fixed "Permission denied" on CopyFile during update swap — now tries xcopy then robocopy as fallbacks
+- All three copy methods logged so swap.log always shows exactly which succeeded or failed
+
 ## v1.0.23
 - Fixed python3xx.dll not found on launch — main.py now cleans all stale _MEI PyInstaller folders from TEMP on startup
 - Added one-click Ollama setup in Configuration tab — appears automatically when Ollama is selected as provider

@@ -1,6 +1,6 @@
 import customtkinter as ctk
 import tkinter as tk
-from app.constants import (BG, SURFACE, SURFACE2, TEXT, SUBTEXT,
+from app.constants import (BG, BG2, SURFACE, SURFACE2, TEXT, SUBTEXT,
                             MAUVE, GREEN, RED, TEAL, BLUE, YELLOW, OVERLAY, HEADER_BG)
 from app.ai_provider import PROVIDERS, DEFAULT_MODELS, PROVIDER_MODELS
 from app.kpa_context import ALL_LEVELS
