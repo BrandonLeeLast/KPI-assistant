@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.19
+- Replaced PowerShell swap stub with VBScript — wscript.exe is never blocked by execution policy or Windows zone restrictions unlike .ps1 files
+- Uses WMI Win32_Process to wait for PID death (more reliable than file lock polling)
+- Uses FileCopy instead of Move-Item — works cross-volume and never blocked by antivirus
+- Swap stub auto-elevates to admin via RunAs if not already elevated
+- If swap fails entirely, opens the update folder in Explorer so user can copy manually
+- All swap steps fully logged to swap.log
+
 ## v1.0.18
 - AI Provider changed from radio buttons to dropdown
 - Model changed from text input to dropdown with known models per provider

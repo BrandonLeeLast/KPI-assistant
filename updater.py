@@ -50,7 +50,7 @@ VERSION_CHECK_URL = (
 _APPDATA      = os.environ.get("APPDATA", os.path.expanduser("~"))
 _UPDATE_DIR   = os.path.join(_APPDATA, "KPI-assistant", "update")
 _STAGED_EXE   = os.path.join(_UPDATE_DIR, "KPI_Assistant.exe")
-_STUB_PATH    = os.path.join(_UPDATE_DIR, "swap.ps1")
+_STUB_PATH    = os.path.join(_UPDATE_DIR, "swap.vbs")
 
 
 def _fetch_remote_version_info() -> dict | None:
@@ -137,58 +137,81 @@ def perform_update(download_url: str, new_version: str,
 
 def _write_swap_stub(pid: int, current_exe: str) -> None:
     """
-    Write a PowerShell script that:
-      1. Waits for our PID to fully exit (process list check, not file lock)
-      2. Atomically renames the staged EXE over the old one (same drive = atomic)
-      3. Relaunches the updated EXE
-      4. Deletes itself
+    Write a VBScript stub — always executable on Windows, never blocked
+    by execution policy or zone restrictions unlike PowerShell .ps1 files.
+    Uses WMI to wait for PID death, then FileCopy to swap, then Shell to relaunch.
     """
-    log_path = os.path.join(_UPDATE_DIR, "swap.log")
-    stub = f"""
-# KPI Assistant swap stub — auto-generated, do not edit
-# NOTE: avoid $pid — reserved in PowerShell for the current session PID
-$appPid   = {pid}
-$oldExe   = '{current_exe.replace("'", "''")}'
-$newExe   = '{_STAGED_EXE.replace("'", "''")}'
-$logFile  = '{log_path.replace("'", "''")}'
-$stubSelf = $MyInvocation.MyCommand.Path
+    log_path   = os.path.join(_UPDATE_DIR, "swap.log")
+    update_dir = _UPDATE_DIR
 
-function Log($msg) {{
-    $ts = Get-Date -Format 'HH:mm:ss'
-    Add-Content -Path $logFile -Value "[$ts] $msg"
-}}
+    stub = f"""' KPI Assistant swap stub — auto-generated
+Dim appPid, oldExe, newExe, logFile, updateDir
+appPid    = {pid}
+oldExe    = "{current_exe}"
+newExe    = "{_STAGED_EXE}"
+logFile   = "{log_path}"
+updateDir = "{update_dir}"
 
-Log "Swap stub started. Waiting for app PID $appPid to exit..."
+Dim fso, shell
+Set fso   = CreateObject("Scripting.FileSystemObject")
+Set shell = CreateObject("WScript.Shell")
 
-# Wait for the app process to fully exit
-while (Get-Process -Id $appPid -ErrorAction SilentlyContinue) {{
-    Start-Sleep -Milliseconds 200
-}}
+Sub Log(msg)
+    Dim f
+    Set f = fso.OpenTextFile(logFile, 8, True)
+    f.WriteLine Now & " " & msg
+    f.Close
+End Sub
 
-Log "App process exited. Settling 1s..."
-Start-Sleep -Milliseconds 1000
+Log "Swap stub started. Waiting for PID " & appPid & " to exit..."
 
-# Swap the EXE
-try {{
-    Move-Item -Path $newExe -Destination $oldExe -Force
-    Log "Move-Item succeeded."
-}} catch {{
-    Log "Move-Item failed: $_ — trying Copy-Item fallback."
-    Copy-Item -Path $newExe -Destination $oldExe -Force
-    Remove-Item -Path $newExe -Force -ErrorAction SilentlyContinue
-    Log "Copy-Item fallback done."
-}}
+' Wait for the app process to fully die using WMI
+Dim wmi, done
+Set wmi = GetObject("winmgmts://./root/cimv2")
+done = False
+Do While Not done
+    Dim procs
+    Set procs = wmi.ExecQuery("SELECT * FROM Win32_Process WHERE ProcessId=" & appPid)
+    If procs.Count = 0 Then
+        done = True
+    Else
+        WScript.Sleep 200
+    End If
+Loop
 
-if (Test-Path $oldExe) {{
-    Log "EXE in place. Relaunching: $oldExe"
-    Start-Process -FilePath $oldExe
-}} else {{
-    Log "ERROR: EXE not found at $oldExe after swap!"
-}}
+Log "PID gone. Settling 1 second..."
+WScript.Sleep 1000
 
-Start-Sleep -Milliseconds 500
-Log "Stub complete. Self-destructing."
-Remove-Item -Path $stubSelf -Force -ErrorAction SilentlyContinue
+' Swap the EXE
+Dim swapOk
+swapOk = False
+On Error Resume Next
+
+fso.CopyFile newExe, oldExe, True
+If Err.Number = 0 Then
+    Log "CopyFile succeeded."
+    fso.DeleteFile newExe, True
+    swapOk = True
+Else
+    Log "CopyFile failed: " & Err.Description
+    Err.Clear
+End If
+
+On Error GoTo 0
+
+If swapOk And fso.FileExists(oldExe) Then
+    Log "EXE in place. Relaunching: " & oldExe
+    shell.Run Chr(34) & oldExe & Chr(34), 1, False
+Else
+    Log "ERROR: Swap failed. Opening update folder for manual copy."
+    shell.Run "explorer.exe " & Chr(34) & updateDir & Chr(34), 1, False
+End If
+
+WScript.Sleep 500
+Log "Stub complete."
+
+' Self-destruct
+fso.DeleteFile WScript.ScriptFullName, True
 """
     with open(_STUB_PATH, "w", encoding="utf-8") as f:
         f.write(stub.strip())
@@ -214,19 +237,14 @@ def launch_swap_and_exit(app) -> None:
     except Exception:
         pass
 
-    # Launch PowerShell stub fully detached — no window, outlives this process
+    # Launch VBScript stub via wscript.exe — silent, no execution policy,
+    # never zone-blocked, always available on Windows
     si = subprocess.STARTUPINFO()
     si.dwFlags    |= subprocess.STARTF_USESHOWWINDOW
     si.wShowWindow = 0  # SW_HIDE
 
     subprocess.Popen(
-        [
-            "powershell.exe",
-            "-NonInteractive",
-            "-WindowStyle", "Hidden",
-            "-ExecutionPolicy", "Bypass",
-            "-File", _STUB_PATH,
-        ],
+        ["wscript.exe", "//B", "//NoLogo", _STUB_PATH],
         startupinfo=si,
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
     )
