@@ -98,18 +98,19 @@ class KPIDashboardApp(ctk.CTk):
         left = ctk.CTkFrame(bar, fg_color="transparent")
         left.pack(side="left", padx=20, pady=10)
 
+        _base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         try:
             from PIL import Image
             import customtkinter as _ctk
-            _icon_path = os.path.join(
-                getattr(sys, '_MEIPASS', os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
-                "static", "KPEye.png"
-            )
-            _logo_img = _ctk.CTkImage(Image.open(_icon_path), size=(40, 40))
+            _logo_img = _ctk.CTkImage(Image.open(os.path.join(_base, "static", "KPEye.png")), size=(40, 40))
             ctk.CTkLabel(left, image=_logo_img, text="").pack(side="left", padx=(0, 8))
         except Exception:
             ctk.CTkLabel(left, text="👁", text_color=MAUVE,
                          font=ctk.CTkFont("Segoe UI", 26)).pack(side="left", padx=(0, 8))
+        try:
+            self.iconbitmap(os.path.join(_base, "app_icon.ico"))
+        except Exception:
+            pass
 
         title_block = ctk.CTkFrame(left, fg_color="transparent")
         title_block.pack(side="left")

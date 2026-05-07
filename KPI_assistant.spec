@@ -8,11 +8,12 @@ a = Analysis(
     pathex=['.'],
     binaries=[],
     datas=[
-        ('config.ini',              '.'),
-        ('version.json',            '.'),
-        ('app/skills_matrix',       'app/skills_matrix'),
-        ('_token.txt',              '.'),
-        ('static',                  'static'),
+        ('config.ini',                  '.'),
+        ('version.json',                '.'),
+        ('app/skills_matrix',           'app/skills_matrix'),
+        ('_token.txt',                  '.'),
+        ('static',                      'static'),
+        ('installer/app_icon.ico',      '.'),
     ],
     hiddenimports=[
         'app',
@@ -93,5 +94,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # icon='icon.ico',
+    icon='installer/app_icon.ico',
 )
