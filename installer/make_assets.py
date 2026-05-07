@@ -86,15 +86,6 @@ def make_wizard_panel():
             r, g, b = [int(c * factor) for c in BG]
             ImageDraw.Draw(img).line([(0, y), (163, y)], fill=(r, g, b))
 
-    draw = ImageDraw.Draw(img)
-
-    # App name + tagline overlay at bottom
-    draw.text((12, 220), "KPEye", font=_font(16), fill=TEXT)
-    draw.text((12, 242), "Born to explore", font=_font(9), fill=MAUVE)
-    draw.text((12, 254), "the cosmos.", font=_font(9), fill=MAUVE)
-    draw.text((12, 268), "Forced to watch", font=_font(9), fill=OVERLAY)
-    draw.text((12, 280), "KPI_Proof.", font=_font(9), fill=OVERLAY)
-
     img.save(os.path.join(OUT, "wizard.bmp"), "BMP")
     print("wizard.bmp generated")
 
