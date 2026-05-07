@@ -33,7 +33,8 @@ def process_file(file_path: str, settings, ui) -> None:
     if auto and show_context:
         user_context = ask_context(file_path, settings.get('MY_LEVEL'))
         if user_context is None:
-            user_context = ""
+            ui.log(f"⏭  Skipped — context cancelled: {filename}", "warn")
+            return
     else:
         user_context = ""
 
@@ -77,6 +78,8 @@ def _classify_and_file(file_path: str, filename: str, user_context: str,
     valid_cats   = get_categories_for_level(level)
 
     ui.log(f"🤖 Calling {provider} ({model}) | Level: {level}", "info")
+    if provider.lower() == "ollama":
+        ui.log("⏳ Ollama: first call may take 30-60s while model loads into RAM…", "warn")
 
     res = classify(file_path, instructions, provider, api_key, model)
 

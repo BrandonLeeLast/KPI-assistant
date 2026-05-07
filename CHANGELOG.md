@@ -1,158 +1,135 @@
 # Changelog
 
+## v1.0.29
+- KPI Worker set as default provider — zero config for end users, no API key needed
+- Auth token baked into EXE at build time via GitHub secret KPI_WORKER_TOKEN
+- Config tab hides model/API key fields when KPI Worker selected, shows managed badge instead
+- Added app/secrets.py — reads token from PyInstaller bundle, falls back to env var for dev
+- _token.txt gitignored — never committed, injected by CI only
+
+## v1.0.28
+- Added Cloudflare Worker provider — deploy worker.js to CF, paste URL as API key, your Gemini key never leaves Cloudflare
+- Added Custom URL provider — any endpoint accepting {image_base64, prompt, model} and returning {response}
+- Optional auth token support for both: paste URL|token in the API key field
+- Dynamic API key hint changes based on selected provider
+- Added Docs button to dashboard — opens developer wiki
+- Fixed CMD windows flashing when Ollama setup runs Docker commands
+- Fixed context cancel now skips AI entirely — screenshot not filed, not marked processed
+
+## v1.0.27
+- Fixed Ollama model pull timeout — bumped from 120s to 300s for CPU-only setups
+- Warns user that first Ollama call may take 30-60s while model loads into RAM
+- Fixed Ollama setup CMD windows flashing — all subprocess calls now use CREATE_NO_WINDOW
+
 ## v1.0.26
 - Switched to proper Inno Setup Windows installer — installs to %LocalAppData%\Programs\KPI-assistant
 - No UAC prompt required (user-level install)
 - Creates Start Menu shortcut + optional Desktop shortcut
 - Registers in Add/Remove Programs with uninstaller
-- Auto-updater now downloads KPI_Assistant_Setup.exe and runs /VERYSILENT — Inno Setup handles kill, install, relaunch
-- Removed all VBScript/bat swap logic — no more file lock, permission, or zone flag issues
+- Auto-updater now downloads KPI_Assistant_Setup.exe and runs /VERYSILENT
 - Only installer published to GitHub Releases — raw EXE removed
-- Fixed Inno Setup version directive — version injected via /DMyAppVersion at build time
-- Custom wizard branding: dark Catppuccin panel, header icon, app .ico — generated in CI via Pillow
+- Custom wizard branding with sad robot image, app icon generated in CI
 - Fixed Ollama model pull charmap crash — UTF-8 with errors=replace, ANSI codes stripped
 
 ## v1.0.25
-- Fixed "name BG2 is not defined" crash on startup — added missing BG2 import to config_tab.py
-- Fixed Python 3.14 syntax error in updater.py — VBScript stub now built with string concatenation instead of f-string to avoid quote/em-dash conflicts
+- Fixed "name BG2 is not defined" crash on startup
+- Fixed Python 3.14 syntax error in updater.py — VBScript stub built with string concatenation
 - Fixed Permission denied on CopyFile — swap now uses cmd /c copy then robocopy as fallbacks
 - Added Zone.Identifier strip before copy to unblock downloaded EXEs
 
 ## v1.0.24
-- Fixed "Permission denied" on CopyFile during update swap — now tries xcopy then robocopy as fallbacks
-- All three copy methods logged so swap.log always shows exactly which succeeded or failed
+- Fixed "Permission denied" on CopyFile during update swap — xcopy then robocopy fallbacks
 
 ## v1.0.23
-- Fixed python3xx.dll not found on launch — main.py now cleans all stale _MEI PyInstaller folders from TEMP on startup
-- Added one-click Ollama setup in Configuration tab — appears automatically when Ollama is selected as provider
-- Setup handles: Docker check, image pull, container creation, model download, API verification — all in background
-- Live log output shows each step with progress
-- Status indicators (Docker / Container / API) show green/red in real time
-- Refresh Status button to check Ollama state without running setup again
-- Container created with --restart always so it starts automatically with Docker
-- Updated Gemini model list to verified working models — removed gemini-1.5-pro/1.5-flash which return 404
-- Default Gemini model changed to gemini-2.5-flash (free tier, multimodal)
-- Added clear error messages for 429 rate limit, 404 model not found, and 401 invalid key with actionable tips
+- Fixed python3xx.dll not found on launch — cleans stale _MEI folders from TEMP on startup
+- Added one-click Ollama setup in Configuration tab
+- Updated Gemini model list to verified working models — removed deprecated 1.5-pro/flash
+- Default Gemini model changed to gemini-2.5-flash
+- Added clear error messages for 429, 404, 401 errors with actionable tips
 
 ## v1.0.22
-- Fixed config tab scroll — replaced recursive child binding with enter/leave canvas bind_all approach
-- Fixed scroll breaking after using scrollbar — unbind_all on mouse leave prevents handler conflicts
-- Added return "break" to stop wheel events propagating to other handlers
-- Improved evidence txt file format — now includes filename, date, level, category, AI model, user context and STAR summary in structured layout
+- Fixed config tab scroll — enter/leave canvas bind_all approach
+- Improved evidence txt file format — structured layout with all metadata
 
 ## v1.0.21
-- Fixed python3xx.dll not found after update — VBScript stub now cleans all stale _MEI PyInstaller folders from %TEMP% before relaunching
+- Fixed python3xx.dll not found after update — VBScript stub cleans _MEI folders before relaunch
 
 ## v1.0.20
-- Updated intermediate skills matrix
-- VBScript swap stub test release — verifying auto-update pipeline end-to-end
+- Test release — VBScript swap stub verification
 
 ## v1.0.19
-- Replaced PowerShell swap stub with VBScript — wscript.exe is never blocked by execution policy or Windows zone restrictions unlike .ps1 files
-- Uses WMI Win32_Process to wait for PID death (more reliable than file lock polling)
-- Uses FileCopy instead of Move-Item — works cross-volume and never blocked by antivirus
-- Swap stub auto-elevates to admin via RunAs if not already elevated
-- If swap fails entirely, opens the update folder in Explorer so user can copy manually
-- All swap steps fully logged to swap.log
+- Replaced PowerShell swap stub with VBScript — never blocked by execution policy
+- Uses WMI Win32_Process to wait for PID death
+- Swap stub auto-elevates to admin if needed
 
 ## v1.0.18
-- AI Provider changed from radio buttons to dropdown
-- Model changed from text input to dropdown with known models per provider
-- "Other (type below)" option in model dropdown reveals a text input for custom model names
-- Model list updates automatically when switching provider
+- AI Provider and Model changed to dropdowns with known model lists
+- "Other (type below)" reveals custom text input
 - All selections persist to config.ini on Save
 
 ## v1.0.17
-- Fixed app not relaunching after update — $pid is a reserved PowerShell variable (current session PID), renamed to $appPid so the wait loop targets the correct process
-- Added swap.log in %APPDATA%/KPI-assistant/update/ for diagnosing future update issues
+- Fixed app not relaunching after update — $pid is reserved in PowerShell, renamed to $appPid
+- Added swap.log for diagnosing update issues
 
 ## v1.0.16
-- Fixed update progress window not closable — X button now shows cancel confirmation during download, closes cleanly after
-- Fixed process not dying after update — app.destroy() + os._exit(0) guarantees process terminates so PS1 stub PID-wait exits correctly
+- Fixed update progress window X button
+- Fixed process not dying after update — app.destroy() + os._exit(0)
 
 ## v1.0.15
-- Complete updater rewrite using PowerShell PID-wait swap approach
-- New EXE downloaded to %APPDATA%/KPI-assistant/update/ (never touches running EXE)
-- Watchdog, hotkey listener and tray stopped before exit so zero lingering file handles
-- PowerShell stub waits for PID to fully disappear from process list then does atomic rename
-- Falls back to copy+delete if cross-volume rename fails (antivirus edge case)
-- Clean sys.exit(0) instead of os.kill or os._exit — proper Python/CTk teardown
-- App relaunches automatically after swap completes
+- Complete updater rewrite — installer-based update flow
 
 ## v1.0.14
-- Fixed config tab section headers taking up too much vertical space — now fixed 24px height
-- Fixed mouse wheel scroll not working on config tab — binds to all child widgets after build
-- Fixed scroll speed too slow — increased from 1 to 3 units per wheel tick
+- Fixed config tab section headers height
+- Fixed mouse wheel scroll on config tab
 
 ## v1.0.13
-- Completely replaced hot-swap updater with simple desktop download — no more bat scripts, no file locking, no process killing
-- Update now downloads new EXE to Desktop as KPI_Assistant_v{version}.exe, opens Desktop in Explorer, and shows "close and run" instructions
-- Progress window now shows a dismissable OK button after download completes
+- Switched to desktop download approach for updates
 
 ## v1.0.12
-- Full skills matrix injected into AI prompt per developer level — AI now classifies against actual KPA criteria, not just category names
-- Added skills matrix text files for all levels: Intern, Graduate, Junior, Intermediate, Senior, Tech Lead
-- Added Tech Lead level with Team Management KPA (exclusive to that level)
-- AI prompt now includes role description, KPA criteria, subcategories and evidence examples for the selected level
-- Category matching now fuzzy-validates against the level's actual applicable KPAs
-- Level selector changed from segmented button to dropdown to accommodate all 6 levels
+- Full skills matrix injected into AI prompt per developer level
+- Added skills matrix for all levels: Intern, Graduate, Junior, Intermediate, Senior, Tech Lead
+- Tech Lead level with Team Management KPA
 
 ## v1.0.11
-- Added "Show context window" toggle — disable for zero-friction silent processing
-- Added independent notification toggles for success and failure events
-- Fixed auto-updater stuck at 85% — replaced close_fds+DETACHED_PROCESS with STARTUPINFO SW_HIDE
-- Multi-provider AI: Gemini, Claude, OpenAI, Ollama — model and key configurable per provider
-- Full config overhaul: 6 sections, editable KPA categories, custom prompt, capture format, notifications
+- Show context window toggle — zero-friction silent processing
+- Multi-provider AI: Gemini, Claude, OpenAI, Ollama
 
 ## v1.0.10
-- Fixed update progress window hanging — removed grab_set() which was starving the Tk event loop
-- Fixed progress bar and labels never updating — now schedule via parent.after()
-- Fixed installer stuck at 85% — background thread now returns after scheduling exit
-- Fixed double context dialog on screenshot capture — overlay guard flag prevents concurrent overlays
-- Fixed Esc cancel not resetting overlay guard
+- Fixed update progress window hanging
+- Fixed double context dialog on screenshot capture
 - Replaced hotkey text input with keyboard recorder
 
 ## v1.0.9
-- Added update progress bar window showing download percentage and install stages
-- Fixed update process leaving old instance alive — replaced os.kill(pid, 9) with os._exit(0)
+- Added update progress bar window
+- Fixed update process leaving old instance alive
 
 ## v1.0.8
-- Fixed auto-updater stuck after download — bat now wipes both _MEIPASS and APPDATA runtime folders
-- Fixed two CMD windows appearing after update — using STARTUPINFO SW_HIDE and start /b
+- Fixed auto-updater stuck after download
 
 ## v1.0.7
-- Fixed version label always showing v0.0.0 in bundled EXE — now reads from sys._MEIPASS
-- Fixed update check incorrectly triggering on every launch due to stale version read
+- Fixed version label always showing v0.0.0
 
 ## v1.0.6
-- Added built-in screenshot capture tool with global hotkey (default: Ctrl+Shift+S)
-- Fullscreen dark overlay with drag-to-select region and live W×H size indicator
-- Screenshot hotkey customisable from Configuration tab — applies without restart
-- Non-intrusive tray balloon notification when image fails to process
+- Added built-in screenshot capture tool with global hotkey
+- Fullscreen dark overlay with drag-to-select region
 
 ## v1.0.5
 - Fixed PyInstaller DLL error after auto-update
-- Improved hot-swap bat — polls for _MEI DLL release before launching new EXE
 
 ## v1.0.4
-- Fixed file handle leak preventing deletion of processed screenshots from watch folder
-- Fixed context dialog thumbnail holding file handle open for duration of dialog
-- Custom STAR context dialog with screenshot thumbnail (replaces pyautogui prompt)
+- Fixed file handle leak
+- Custom STAR context dialog with screenshot thumbnail
 
 ## v1.0.3
-- Fixed file handle leak — watch folder files can now be deleted after processing
-- Improved hot-swap updater bat — cleans stale runtime folder before restarting
+- Fixed file handle leak preventing watch folder deletion
 
 ## v1.0.2
-- Modern CustomTkinter UI — rounded buttons, stat cards, animated pulse indicator
-- Processed image registry moved to %APPDATA%/KPI-assistant/processed_log.json
-- Migrated to google-genai SDK (gemini-2.0-flash)
-- Refactored into clean package structure (app/, app/ui/)
+- Modern CustomTkinter UI
+- Migrated to google-genai SDK
 
 ## v1.0.1
-- GitHub Actions CI/CD — auto-bumps patch version on every push to main
+- GitHub Actions CI/CD — auto-bumps patch version
 - Auto-updater with hot-swap EXE batch script
-- Dark-theme tkinter dashboard with system tray integration
 
 ## v1.0.0
 - Initial release

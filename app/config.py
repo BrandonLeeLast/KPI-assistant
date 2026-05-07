@@ -15,7 +15,7 @@ def get_default_config() -> configparser.ConfigParser:
     cfg = configparser.ConfigParser()
     cfg['DEFAULT'] = {
         # ── AI Provider ───────────────────────────────────────────────────────
-        'AI_PROVIDER':   'Gemini',
+        'AI_PROVIDER':   'KPI Worker',
         'API_KEY':       'YOUR_API_KEY_HERE',
         'AI_MODEL':      'gemini-2.5-flash',
 

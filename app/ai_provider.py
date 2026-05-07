@@ -20,17 +20,22 @@ from PIL import Image
 
 # ── Provider registry ─────────────────────────────────────────────────────────
 PROVIDERS: dict[str, str] = {
-    "Gemini":  "gemini",
-    "Claude":  "claude",
-    "OpenAI":  "openai",
-    "Ollama":  "ollama",
+    "KPI Worker": "kpi_worker",   # default — uses baked-in token, no user key needed
+    "Gemini":     "gemini",
+    "Claude":     "claude",
+    "OpenAI":     "openai",
+    "Ollama":     "ollama",
+    "Cloudflare": "custom_url",
+    "Custom URL": "custom_url",
 }
 
 DEFAULT_MODELS: dict[str, str] = {
-    "gemini": "gemini-2.5-flash",
-    "claude": "claude-opus-4-5",
-    "openai": "gpt-4o",
-    "ollama": "llava:13b",
+    "kpi_worker": "",
+    "gemini":     "gemini-2.5-flash",
+    "claude":     "claude-opus-4-5",
+    "openai":     "gpt-4o",
+    "ollama":     "llava:13b",
+    "custom_url": "",
 }
 
 # Known models per provider shown in the dropdown
@@ -70,6 +75,9 @@ PROVIDER_MODELS: dict[str, list[str]] = {
         "moondream",       # 1.7GB — fastest, lower quality
         "Other (type below)",
     ],
+    "custom_url": [
+        "Other (type below)",
+    ],
 }
 
 
@@ -80,10 +88,12 @@ def classify(image_path: str, instructions: str, provider: str,
     Raises RuntimeError with a user-friendly message on failure.
     """
     fn = {
-        "gemini": _classify_gemini,
-        "claude": _classify_claude,
-        "openai": _classify_openai,
-        "ollama": _classify_ollama,
+        "kpi_worker": _classify_kpi_worker,
+        "gemini":     _classify_gemini,
+        "claude":     _classify_claude,
+        "openai":     _classify_openai,
+        "ollama":     _classify_ollama,
+        "custom_url": _classify_custom_url,
     }.get(provider.lower())
 
     if fn is None:
@@ -202,6 +212,115 @@ def _classify_ollama(image_path: str, instructions: str,
         data=payload,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        data = json.loads(resp.read())
+    # 300s timeout — local models can take 30-60s to load into RAM on first call
+    try:
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            data = json.loads(resp.read())
+    except urllib.error.URLError as e:
+        if "timed out" in str(e).lower():
+            raise RuntimeError(
+                f"Ollama timed out after 5 minutes. The model '{model}' may still be "
+                f"loading into RAM. Try again in a moment, or use a smaller model like llava:7b."
+            ) from e
+        raise
+    return data["response"]
+
+
+# ── KPI Worker (default — baked-in token, no user config needed) ─────────────
+def _classify_kpi_worker(image_path: str, instructions: str,
+                          api_key: str, model: str) -> str:
+    """
+    Sends to the official KPI Assistant Cloudflare Worker.
+    Auth token is baked into the EXE at build time — user needs no API key.
+    """
+    from app.secrets import KPI_WORKER_URL, WORKER_TOKEN
+    import io
+
+    with Image.open(image_path) as raw:
+        img = raw.copy().convert("RGB")
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=85)
+    b64 = base64.b64encode(buf.getvalue()).decode()
+
+    payload = json.dumps({
+        "image_base64": b64,
+        "prompt":       instructions,
+        "model":        "",
+    }).encode()
+
+    headers = {
+        "Content-Type":  "application/json",
+        "X-Auth-Token":  WORKER_TOKEN,
+    }
+
+    req = urllib.request.Request(KPI_WORKER_URL, data=payload, headers=headers)
+
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode(errors="replace")
+        if e.code == 401:
+            raise RuntimeError("KPI Worker rejected the request — token mismatch. Please update the app.") from e
+        raise RuntimeError(f"KPI Worker error {e.code}: {body}") from e
+
+    return data.get("response", "")
+
+
+# ── Custom URL (Cloudflare Worker or any compatible endpoint) ─────────────────
+def _classify_custom_url(image_path: str, instructions: str,
+                          api_key: str, model: str) -> str:
+    """
+    POST to any custom endpoint that accepts:
+      { image_base64: str, prompt: str, model: str }
+    and returns:
+      { response: str }
+
+    API key field format:
+      - Just the URL: https://your-worker.workers.dev
+      - URL with auth: https://your-worker.workers.dev|your-auth-token
+    """
+    import io
+
+    # Parse URL and optional auth token from api_key field
+    if "|" in api_key:
+        url, auth_token = api_key.split("|", 1)
+    else:
+        url, auth_token = api_key.strip(), ""
+
+    url = url.strip().rstrip("/")
+    if not url.startswith("http"):
+        raise RuntimeError(
+            "Custom URL provider requires a valid URL in the API Key field.\n"
+            "Format: https://your-endpoint.com  or  https://your-endpoint.com|auth-token"
+        )
+
+    with Image.open(image_path) as raw:
+        img = raw.copy().convert("RGB")
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=85)
+    b64 = base64.b64encode(buf.getvalue()).decode()
+
+    payload = json.dumps({
+        "image_base64": b64,
+        "prompt":       instructions,
+        "model":        model or "",
+    }).encode()
+
+    headers = {"Content-Type": "application/json"}
+    if auth_token:
+        headers["X-Auth-Token"] = auth_token
+
+    req = urllib.request.Request(url, data=payload, headers=headers)
+
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode(errors="replace")
+        raise RuntimeError(f"Custom endpoint returned {e.code}: {body}") from e
+
+    if "response" not in data:
+        raise RuntimeError(f"Custom endpoint response missing 'response' key. Got: {data}")
+
     return data["response"]

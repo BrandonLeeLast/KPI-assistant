@@ -15,6 +15,11 @@ import json
 import time
 import threading
 
+# Hide console windows on all subprocess calls — prevents CMD flashing on screen
+_SI = subprocess.STARTUPINFO()
+_SI.dwFlags    |= subprocess.STARTF_USESHOWWINDOW
+_SI.wShowWindow = 0  # SW_HIDE
+
 
 OLLAMA_CONTAINER = "kpi-ollama"
 OLLAMA_IMAGE     = "ollama/ollama"
@@ -23,9 +28,13 @@ OLLAMA_URL       = f"http://localhost:{OLLAMA_PORT}"
 
 
 def _run(cmd: list, timeout: int = 30) -> tuple[int, str, str]:
-    """Run a command, return (returncode, stdout, stderr)."""
+    """Run a command hidden, return (returncode, stdout, stderr)."""
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        r = subprocess.run(
+            cmd, capture_output=True, text=True,
+            timeout=timeout, startupinfo=_SI,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
         return r.returncode, r.stdout.strip(), r.stderr.strip()
     except subprocess.TimeoutExpired:
         return -1, "", "Command timed out"
@@ -177,7 +186,9 @@ def _setup_worker(model: str, on_log, on_done, on_error) -> None:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 encoding="utf-8",
-                errors="replace",   # replace undecodable bytes with ?
+                errors="replace",
+                startupinfo=_SI,
+                creationflags=subprocess.CREATE_NO_WINDOW,
             )
             for line in proc.stdout:
                 line = line.strip()

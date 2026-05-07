@@ -57,6 +57,18 @@ jobs:
         run: pip install -r requirements.txt
 
       # ── Build standalone EXE ─────────────────────────────────────────────────
+      - name: Bake worker token into build
+        shell: pwsh
+        run: |
+          $token = "${{ secrets.KPI_WORKER_TOKEN }}"
+          if ($token) {
+            $token | Out-File "_token.txt" -Encoding utf8 -NoNewline
+            Write-Output "Token baked in."
+          } else {
+            Write-Output "KPI_WORKER_TOKEN secret not set — token will be empty."
+            "" | Out-File "_token.txt" -Encoding utf8 -NoNewline
+          }
+
       - name: Build standalone EXE
         run: pyinstaller KPI_assistant.spec
 

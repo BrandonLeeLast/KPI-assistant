@@ -61,7 +61,17 @@ def build(parent: ctk.CTkFrame, app) -> dict:
         corner_radius=8, height=36,
         command=app.manual_update_check,
     )
-    refs["btn_update"].pack(side="right")
+    refs["btn_update"].pack(side="right", padx=(8, 0))
+
+    ctk.CTkButton(
+        btn_row, text="📖  Docs",
+        fg_color=SURFACE2, hover_color="#585b70", text_color=TEXT,
+        font=ctk.CTkFont("Segoe UI", 12),
+        corner_radius=8, height=36,
+        command=lambda: __import__("webbrowser").open(
+            "https://ai-assistant-docs.brandonl-9ff.workers.dev/"
+        ),
+    ).pack(side="right")
 
     # ── log console ───────────────────────────────────────────────────────────
     log_card = ctk.CTkFrame(parent, fg_color=BG2, corner_radius=12)

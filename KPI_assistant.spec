@@ -11,6 +11,7 @@ a = Analysis(
         ('config.ini',              '.'),
         ('version.json',            '.'),
         ('app/skills_matrix',       'app/skills_matrix'),
+        ('_token.txt',              '.'),
     ],
     hiddenimports=[
         'app',
@@ -27,6 +28,7 @@ a = Analysis(
         'app.ui.widgets',
         'app.ui.context_dialog',
         'app.ai_provider',
+        'app.secrets',
         'app.ollama_setup',
         'app.kpa_context',
         'anthropic',

@@ -136,8 +136,22 @@ def build(parent: ctk.CTkFrame, app) -> None:
     )
     provider_menu.pack(fill="x", pady=(0, 4))
 
+    # ── KPI Worker managed badge — shown only for KPI Worker ─────────────────
+    kpi_worker_badge = ctk.CTkFrame(scroll, fg_color=SURFACE, corner_radius=8)
+    ctk.CTkLabel(kpi_worker_badge,
+                 text="✅  Managed by KPI Worker — no API key required",
+                 text_color=GREEN, font=ctk.CTkFont("Segoe UI", 11),
+                 anchor="w").pack(padx=12, pady=8, fill="x")
+    ctk.CTkLabel(kpi_worker_badge,
+                 text="Your screenshots are processed securely via the official KPI Assistant endpoint.",
+                 text_color=OVERLAY, font=ctk.CTkFont("Segoe UI", 10),
+                 anchor="w").pack(padx=12, pady=(0, 8), fill="x")
+
+    # ── Model + API key container — hidden for KPI Worker ────────────────────
+    provider_config_frame = ctk.CTkFrame(scroll, fg_color="transparent")
+
     # ── Model dropdown + custom text input ───────────────────────────────────
-    ctk.CTkLabel(scroll, text="Model", text_color=SUBTEXT,
+    ctk.CTkLabel(provider_config_frame, text="Model", text_color=SUBTEXT,
                  font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(2, 0))
 
     # Internal var for the dropdown selection — separate from app.model_var
@@ -145,7 +159,7 @@ def build(parent: ctk.CTkFrame, app) -> None:
     _model_choice = tk.StringVar()
 
     model_menu = ctk.CTkOptionMenu(
-        scroll,
+        provider_config_frame,
         values=[""],
         variable=_model_choice,
         fg_color=SURFACE, button_color=SURFACE2, button_hover_color="#585b70",
@@ -158,7 +172,7 @@ def build(parent: ctk.CTkFrame, app) -> None:
 
     # Custom model text input — shown when "Other" is selected
     custom_model_entry = ctk.CTkEntry(
-        scroll, textvariable=app.model_var,
+        provider_config_frame, textvariable=app.model_var,
         fg_color=SURFACE, border_color=MAUVE, border_width=1,
         text_color=TEXT, placeholder_text="Type custom model name…",
         placeholder_text_color=OVERLAY,
@@ -199,16 +213,25 @@ def build(parent: ctk.CTkFrame, app) -> None:
                 _model_choice.set(default)
                 custom_model_entry.pack_forget()
 
-    app.provider_var.trace_add("write", _update_model_dropdown)
+    def _on_provider_ui_change(*_):
+        _update_model_dropdown()
+        if app.provider_var.get() == "KPI Worker":
+            provider_config_frame.pack_forget()
+            kpi_worker_badge.pack(fill="x", pady=(4, 2))
+        else:
+            kpi_worker_badge.pack_forget()
+            provider_config_frame.pack(fill="x")
 
-    # Initialise dropdown for current provider on first build
-    scroll.after(50, _update_model_dropdown)
+    app.provider_var.trace_add("write", _on_provider_ui_change)
+
+    # Initialise on first build
+    scroll.after(50, _on_provider_ui_change)
 
     # ── API Key ───────────────────────────────────────────────────────────────
-    ctk.CTkLabel(scroll, text="API Key", text_color=SUBTEXT,
+    ctk.CTkLabel(provider_config_frame, text="API Key", text_color=SUBTEXT,
                  font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(4, 0))
 
-    key_row = ctk.CTkFrame(scroll, fg_color="transparent")
+    key_row = ctk.CTkFrame(provider_config_frame, fg_color="transparent")
     key_row.pack(fill="x", pady=(0, 2))
 
     key_entry = ctk.CTkEntry(
@@ -228,7 +251,25 @@ def build(parent: ctk.CTkFrame, app) -> None:
         font=ctk.CTkFont("Segoe UI", 10), command=_toggle_show, width=60,
     ).pack(side="right")
 
-    hint("For Ollama: leave API Key blank or set to your server URL (http://localhost:11434)")
+    # Dynamic hint changes based on selected provider
+    api_hint = ctk.CTkLabel(provider_config_frame, text="", text_color=OVERLAY,
+                             font=ctk.CTkFont("Segoe UI", 10), anchor="w", justify="left")
+    api_hint.pack(fill="x", pady=(0, 2))
+
+    _API_HINTS = {
+        "Gemini":     "Paste your Google AI Studio API key above.",
+        "Claude":     "Paste your Anthropic API key above.",
+        "OpenAI":     "Paste your OpenAI API key above.",
+        "Ollama":     "Leave blank to use http://localhost:11434, or enter your server URL.",
+        "Cloudflare": "Paste your Cloudflare Worker URL above.\nOptional auth: https://your-worker.dev|your-token",
+        "Custom URL": "Paste your endpoint URL above. Must accept {image_base64, prompt, model} and return {response}.\nOptional auth: https://your-endpoint.com|auth-token",
+    }
+
+    def _update_api_hint(*_):
+        api_hint.configure(text=_API_HINTS.get(app.provider_var.get(), ""))
+
+    app.provider_var.trace_add("write", _update_api_hint)
+    scroll.after(60, _update_api_hint)
 
     # ── Ollama setup panel — only visible when Ollama is selected ─────────────
     ollama_panel = ctk.CTkFrame(scroll, fg_color=BG2, corner_radius=10)
