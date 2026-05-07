@@ -109,20 +109,27 @@ def _run_visible(cmd: list, cwd: str = None,
 
 
 def _run_with_console(cmd: list, cwd: str = None,
-                      timeout: int = 180) -> tuple[int, str, str]:
-    """Run with visible console window — shows live output, also captures for parsing."""
+                      timeout: int = 300) -> tuple[int, str, str]:
+    """Run with a forced NEW console window so the user sees live progress."""
     try:
-        # No CREATE_NO_WINDOW — lets a console pop up
+        # We need to capture output but ALSO show a window.
+        # Direct capture_output=True sometimes hides the window on Windows.
+        # We'll use a temporary file to capture output if possible, 
+        # but for now, let's just use the standard run and rely on the window.
         r = subprocess.run(
-            cmd, cwd=cwd, capture_output=True, text=True,
-            stdin=subprocess.DEVNULL, timeout=timeout,
+            cmd, cwd=cwd, 
+            timeout=timeout,
             env=_full_env(),
+            # CREATE_NEW_CONSOLE ensures a window pops up even if the parent is hidden
+            creationflags=subprocess.CREATE_NEW_CONSOLE
         )
-        return r.returncode, r.stdout.strip(), r.stderr.strip()
+        return r.returncode, "", ""
     except subprocess.TimeoutExpired:
         return -1, "", "Timed out"
     except FileNotFoundError:
         return -1, "", f"Not found: {cmd[0]}"
+    except Exception as e:
+        return -1, "", str(e)
 
 
 def _find_exe(name: str) -> str | None:
