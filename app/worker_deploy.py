@@ -110,25 +110,44 @@ def _run_visible(cmd: list, cwd: str = None,
 
 def _run_with_console(cmd: list, cwd: str = None,
                       timeout: int = 300) -> tuple[int, str, str]:
-    """Run with a forced NEW console window so the user sees live progress."""
+    """Run with a forced NEW console window AND capture output via file redirection."""
+    import tempfile
+    
+    # Create temp files for capture
+    out_file = os.path.join(tempfile.gettempdir(), f"cf_deploy_out_{os.getpid()}.txt")
+    err_file = os.path.join(tempfile.gettempdir(), f"cf_deploy_err_{os.getpid()}.txt")
+    
     try:
-        # We need to capture output but ALSO show a window.
-        # Direct capture_output=True sometimes hides the window on Windows.
-        # We'll use a temporary file to capture output if possible, 
-        # but for now, let's just use the standard run and rely on the window.
+        # On Windows, we can use shell redirection to capture while using NEW_CONSOLE
+        cmd_str = " ".join(f'"{c}"' if " " in c else c for c in cmd)
+        cmd_with_redirection = f'{cmd_str} > "{out_file}" 2> "{err_file}"'
+        
         r = subprocess.run(
-            cmd, cwd=cwd, 
+            cmd_with_redirection,
+            cwd=cwd, 
             timeout=timeout,
             env=_full_env(),
-            # CREATE_NEW_CONSOLE ensures a window pops up even if the parent is hidden
+            shell=True,
             creationflags=subprocess.CREATE_NEW_CONSOLE
         )
-        return r.returncode, "", ""
-    except subprocess.TimeoutExpired:
-        return -1, "", "Timed out"
-    except FileNotFoundError:
-        return -1, "", f"Not found: {cmd[0]}"
+        
+        # Read the captured results
+        stdout_res, stderr_res = "", ""
+        if os.path.exists(out_file):
+            with open(out_file, "r", errors="ignore") as f:
+                stdout_res = f.read()
+            os.remove(out_file)
+        if os.path.exists(err_file):
+            with open(err_file, "r", errors="ignore") as f:
+                stderr_res = f.read()
+            os.remove(err_file)
+            
+        return r.returncode, stdout_res, stderr_res
+        
     except Exception as e:
+        # Cleanup if files were left over
+        if os.path.exists(out_file): os.remove(out_file)
+        if os.path.exists(err_file): os.remove(err_file)
         return -1, "", str(e)
 
 
