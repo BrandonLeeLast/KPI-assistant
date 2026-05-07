@@ -299,49 +299,22 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
         return
     log("✅ Worker deployed!")
 
-    # ── Step 7: Get worker URL from wrangler config ──────────────────────────
+    # ── Step 7: Extract worker URL from deploy output ────────────────────────
     log("🔍 Detecting worker URL...")
-    import json
     import re as regex
 
-    # Read wrangler.jsonc for worker name
-    wrangler_config = os.path.join(worker_root, "wrangler.jsonc")
-    worker_name = "kpi-assistant-ai"  # default
-    try:
-        with open(wrangler_config, "r", encoding="utf-8") as f:
-            # Strip comments from jsonc
-            content = f.read()
-            content = regex.sub(r'//.*', '', content)
-            content = regex.sub(r'/\*.*?\*/', '', content, flags=regex.DOTALL)
-            config = json.loads(content)
-            worker_name = config.get("name", worker_name)
-            log(f"   Worker name: {worker_name}")
-    except Exception as e:
-        log(f"   Could not read config: {e}")
+    # Parse deploy output for .workers.dev URL
+    worker_url = ""
+    deploy_output = out + "\n" + err
 
-    # Get account subdomain via wrangler whoami
-    log("   Getting account info from Cloudflare...")
-    code, out, err = _run([npx_exe, "wrangler", "whoami"], cwd=worker_root, timeout=15)
-    account_subdomain = ""
-    if code == 0 and out:
-        log(f"   Account info received")
-        # Look for account ID or subdomain in output
-        for line in out.splitlines():
-            # Output format: "Account Name | Account ID"
-            if "|" in line:
-                parts = line.split("|")
-                if len(parts) >= 2:
-                    account_id = parts[1].strip()
-                    # Subdomain is typically first 9 chars of account ID
-                    if len(account_id) >= 9:
-                        account_subdomain = account_id[:9].lower()
-                        break
+    # Look for https://xxx.workers.dev pattern
+    url_match = regex.search(r'https://[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+\.workers\.dev', deploy_output)
+    if url_match:
+        worker_url = url_match.group(0)
+        log(f"   Found URL: {worker_url}")
     else:
-        log(f"   Could not get account info: {err or 'no output'}")
-
-    if account_subdomain:
-        worker_url = f"https://{worker_name}.{account_subdomain}.workers.dev"
-    else:
+        # Fallback: manual URL entry
+        log("   Could not parse URL from deploy output")
         on_error(
             "Worker deployed successfully!\n\n"
             "However, could not auto-detect the worker URL.\n\n"
