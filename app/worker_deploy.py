@@ -275,14 +275,17 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
     log("🚀 Deploying worker to Cloudflare...")
     log("   (Console window will show live progress)")
 
-    # Run without capture so user sees output in console
+    # Run with capture to get error details, but also show console
     try:
         r = subprocess.run(
             [npx_exe, "wrangler", "deploy"],
             cwd=worker_root, timeout=180,
             stdin=subprocess.DEVNULL, env=_full_env(),
+            capture_output=True, text=True,
         )
         code = r.returncode
+        out = r.stdout
+        err = r.stderr
     except subprocess.TimeoutExpired:
         on_error("Deployment timed out after 3 minutes")
         return
@@ -291,7 +294,8 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
         return
 
     if code != 0:
-        on_error("Deployment failed — check console window for errors")
+        error_msg = err or out or "Unknown error"
+        on_error(f"Deployment failed:\n\n{error_msg}")
         return
     log("✅ Worker deployed!")
 
