@@ -328,7 +328,7 @@ def build(parent: ctk.CTkFrame, app) -> None:
     def _update_api_hint(*_):
         p = app.provider_var.get()
         api_hint.configure(text=_API_HINTS.get(p, ""))
-        if p in ("Cloudflare", "Custom URL"):
+        if p == "Cloudflare":
             deploy_btn.pack(fill="x", pady=(4, 2))
         else:
             deploy_btn.pack_forget()
