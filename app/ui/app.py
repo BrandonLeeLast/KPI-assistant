@@ -45,9 +45,21 @@ class KPIDashboardApp(ctk.CTk):
         d = self.config_data['DEFAULT']
 
         # ── AI provider ───────────────────────────────────────────────────────
-        self.provider_var  = tk.StringVar(value=d.get('AI_PROVIDER',   'Gemini'))
-        self.api_key_var   = tk.StringVar(value=d.get('API_KEY', '') or d.get('GEMINI_API_KEY', ''))
-        self.model_var     = tk.StringVar(value=d.get('AI_MODEL',      'gemini-2.0-flash'))
+        self.provider_var  = tk.StringVar(value=d.get('AI_PROVIDER', 'Gemini'))
+        # Per-provider key storage — each provider keeps its own value
+        self._provider_keys = {
+            'Gemini':     d.get('API_KEY_GEMINI',     '') or d.get('API_KEY', '') or d.get('GEMINI_API_KEY', ''),
+            'Claude':     d.get('API_KEY_CLAUDE',     ''),
+            'OpenAI':     d.get('API_KEY_OPENAI',     ''),
+            'Ollama':     d.get('API_KEY_OLLAMA',     ''),
+            'Cloudflare': d.get('API_KEY_CLOUDFLARE', ''),
+            'Custom URL': d.get('API_KEY_CUSTOM',     ''),
+        }
+        _cur = self.provider_var.get()
+        self.api_key_var   = tk.StringVar(value=self._provider_keys.get(_cur, ''))
+        self._prev_provider = _cur
+        self.provider_var.trace_add("write", self._on_provider_key_swap)
+        self.model_var     = tk.StringVar(value=d.get('AI_MODEL', 'gemini-2.0-flash'))
 
         # ── Developer level ───────────────────────────────────────────────────
         self.level_var     = tk.StringVar(value=d.get('MY_LEVEL',      'Intermediate'))
@@ -296,6 +308,14 @@ class KPIDashboardApp(ctk.CTk):
             self.after(0, _update)
         threading.Thread(target=_check, daemon=True).start()
 
+    def _on_provider_key_swap(self, *_) -> None:
+        new_provider = self.provider_var.get()
+        if new_provider == self._prev_provider:
+            return
+        self._provider_keys[self._prev_provider] = self.api_key_var.get()
+        self.api_key_var.set(self._provider_keys.get(new_provider, ''))
+        self._prev_provider = new_provider
+
     def open_evidence_folder(self) -> None:
         path = self.evidence_folder_var.get()
         if os.path.exists(path):
@@ -307,9 +327,17 @@ class KPIDashboardApp(ctk.CTk):
         d = self.config_data['DEFAULT']
         # AI provider
         d['AI_PROVIDER']       = self.provider_var.get()
-        d['API_KEY']           = self.api_key_var.get()
         d['AI_MODEL']          = self.model_var.get()
-        d['GEMINI_API_KEY']    = self.api_key_var.get()  # legacy compat
+        # Save current key into per-provider store before persisting
+        self._provider_keys[self.provider_var.get()] = self.api_key_var.get()
+        d['API_KEY']           = self.api_key_var.get()
+        d['GEMINI_API_KEY']    = self._provider_keys.get('Gemini', '')  # legacy compat
+        d['API_KEY_GEMINI']    = self._provider_keys.get('Gemini',     '')
+        d['API_KEY_CLAUDE']    = self._provider_keys.get('Claude',     '')
+        d['API_KEY_OPENAI']    = self._provider_keys.get('OpenAI',     '')
+        d['API_KEY_OLLAMA']    = self._provider_keys.get('Ollama',     '')
+        d['API_KEY_CLOUDFLARE']= self._provider_keys.get('Cloudflare', '')
+        d['API_KEY_CUSTOM']    = self._provider_keys.get('Custom URL', '')
         # Level
         d['MY_LEVEL']          = self.level_var.get()
         # Folders
