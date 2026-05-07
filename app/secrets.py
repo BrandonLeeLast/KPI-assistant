@@ -8,8 +8,9 @@ import os
 import sys
 
 
-# The default KPI Worker endpoint
-KPI_WORKER_URL = "https://kpi-assistant-ai.brandonl-9ff.workers.dev"
+# Placeholder — each user deploys their own worker via the Deploy wizard
+# The actual URL is saved to config after deployment
+KPI_WORKER_URL = ""
 
 
 def get_worker_token() -> str:

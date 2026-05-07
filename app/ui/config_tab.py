@@ -276,6 +276,33 @@ def build(parent: ctk.CTkFrame, app) -> None:
                              font=ctk.CTkFont("Segoe UI", 10), anchor="w", justify="left")
     api_hint.pack(fill="x", pady=(0, 2))
 
+    # Deploy button — shown for Cloudflare / Custom URL
+    deploy_btn = ctk.CTkButton(
+        provider_config_frame,
+        text="🚀  Deploy My Own AI Worker (Free)",
+        fg_color=TEAL, hover_color="#78c9bf", text_color=HEADER_BG,
+        font=ctk.CTkFont("Segoe UI", 11, weight="bold"),
+        corner_radius=8, height=36,
+        command=lambda: _open_deploy_wizard(),
+    )
+
+    def _open_deploy_wizard():
+        from app.ui.worker_wizard import WorkerWizard
+        def _on_done(url):
+            app.api_key_var.set(url)
+            app.provider_var.set("Custom URL")
+            app.save_settings()
+            app.log(f"✅ Worker deployed: {url}", "success")
+        WorkerWizard(app, _on_done)
+
+    def _update_api_hint(*_):
+        p = app.provider_var.get()
+        api_hint.configure(text=_API_HINTS.get(p, ""))
+        if p in ("Cloudflare", "Custom URL"):
+            deploy_btn.pack(fill="x", pady=(4, 2))
+        else:
+            deploy_btn.pack_forget()
+
     _API_HINTS = {
         "Gemini":     "Paste your Google AI Studio API key above.",
         "Claude":     "Paste your Anthropic API key above.",
@@ -284,9 +311,6 @@ def build(parent: ctk.CTkFrame, app) -> None:
         "Cloudflare": "Paste your Cloudflare Worker URL above.\nOptional auth: https://your-worker.dev|your-token",
         "Custom URL": "Paste your endpoint URL above. Must accept {image_base64, prompt, model} and return {response}.\nOptional auth: https://your-endpoint.com|auth-token",
     }
-
-    def _update_api_hint(*_):
-        api_hint.configure(text=_API_HINTS.get(app.provider_var.get(), ""))
 
     app.provider_var.trace_add("write", _update_api_hint)
     scroll.after(60, _update_api_hint)

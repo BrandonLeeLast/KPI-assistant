@@ -31,6 +31,8 @@ a = Analysis(
         'app.secrets',
         'app.ollama_setup',
         'app.kpa_context',
+        'app.worker_deploy',
+        'app.ui.worker_wizard',
         'anthropic',
         'openai',
         'app.ui.capture_overlay',
@@ -53,6 +55,9 @@ a = Analysis(
         'PIL.ImageDraw',
         'packaging',
         'packaging.version',
+        'app.worker_deploy',
+        'app.ui.worker_wizard'
+
     ],
     hookspath=[],
     hooksconfig={},

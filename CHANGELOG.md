@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.31
+- Added one-click "Deploy My Own AI Worker" wizard — deploys user's private Cloudflare Worker from template repo
+- Wizard handles: Node.js check, template download, npm install, CF login, AUTH_TOKEN secret, wrangler deploy, URL detection
+- Deploy button appears automatically when Cloudflare or Custom URL provider is selected
+- Worker URL + token saved to config automatically after successful deploy
+- Removed hardcoded worker URL — every user gets their own private worker on their CF account
+- Worker template uses Cloudflare Workers AI (llama-3.2-11b-vision) — no external API calls
+
 ## v1.0.29
 - KPI Worker set as default provider — zero config for end users, no API key needed
 - Auth token baked into EXE at build time via GitHub secret KPI_WORKER_TOKEN
