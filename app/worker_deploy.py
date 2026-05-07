@@ -294,6 +294,11 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
         on_error(f"Deployment failed:\n\n{error_msg}")
         return
     log("✅ Worker deployed!")
+    
+    # Wait a moment for Cloudflare's backend to catch up before querying URL
+    log("⏳ Finalizing deployment...")
+    import time
+    time.sleep(2)
 
     # ── Step 7: Robust worker URL detection ──────────────────────────────────
     log("🔍 Detecting worker URL...")
@@ -344,28 +349,45 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
     import re as regex
     # Handle ANSI codes by cleaning the output if possible
     clean_output = regex.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', deploy_output)
-    url_match = regex.search(r'https://[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+\.workers\.dev', clean_output)
+    # Look for patterns like https://xxx.workers.dev OR just xxx.workers.dev
+    url_match = regex.search(r'(https?://)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+\.workers\.dev', clean_output)
     if url_match:
         worker_url = url_match.group(0)
+        if not worker_url.startswith("http"):
+            worker_url = "https://" + worker_url
         log(f"   Detected from output: {worker_url}")
-    else:
-        # Priority B: Try to get it from wrangler deployments list
-        log("   Scraper missed URL. Checking deployment history...")
+    
+    if not worker_url:
+        # Priority B: Try 'wrangler deployments view' (Most reliable for live metadata)
+        log("   Checking specific deployment metadata...")
+        try:
+            code_v, out_v, _ = _run([npx_exe, "wrangler", "deployments", "view"], cwd=worker_root)
+            # This output is usually text, not JSON, but contains the URL
+            v_clean = regex.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', out_v)
+            v_match = regex.search(r'(https?://)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+\.workers\.dev', v_clean)
+            if v_match:
+                worker_url = v_match.group(0)
+                if not worker_url.startswith("http"):
+                    worker_url = "https://" + worker_url
+                log(f"   Detected from view: {worker_url}")
+        except:
+            pass
+
+    if not worker_url:
+        # Priority C: Try to get it from wrangler deployments list --json
+        log("   Scraper missed URL. Checking deployment list...")
         try:
             code_d, out_d, _ = _run([npx_exe, "wrangler", "deployments", "list", "--json"], cwd=worker_root)
             if code_d == 0:
                 deps_raw = json.loads(out_d)
-                # Some versions return a list, others a dict with a 'deployments' key
                 deps = deps_raw.get("deployments", []) if isinstance(deps_raw, dict) else deps_raw
-
                 if deps and isinstance(deps, list) and len(deps) > 0:
-                    # Look for URL in the latest deployment
                     target_dep = deps[0]
                     worker_url = target_dep.get("url", "")
                     if worker_url:
-                        log(f"   Detected from history: {worker_url}")
-        except Exception as e:
-            log(f"   History check failed: {e}")
+                        log(f"   Detected from list: {worker_url}")
+        except:
+            pass
 
     if not worker_url:
         # Fallback: prompt user
