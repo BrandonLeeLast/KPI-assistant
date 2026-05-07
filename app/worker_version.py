@@ -5,7 +5,7 @@ import urllib.request
 import json
 
 # Update this when releasing new worker template versions
-LATEST_WORKER_VERSION = "1.0.0"
+LATEST_WORKER_VERSION = "1.0.1"
 
 
 def check_worker_version(worker_url: str) -> tuple[bool, str, str]:

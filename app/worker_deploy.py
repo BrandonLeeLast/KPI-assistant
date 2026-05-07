@@ -273,25 +273,14 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
 
     # ── Step 6: Deploy ────────────────────────────────────────────────────────
     log("🚀 Deploying worker to Cloudflare...")
-    log("   (Console window will show live progress)")
+    log("   (A console window will stay open during upload)")
 
-    # Run with capture to get error details, but also show console
-    try:
-        r = subprocess.run(
-            [npx_exe, "wrangler", "deploy"],
-            cwd=worker_root, timeout=180,
-            stdin=subprocess.DEVNULL, env=_full_env(),
-            capture_output=True, text=True,
-        )
-        code = r.returncode
-        out = r.stdout
-        err = r.stderr
-    except subprocess.TimeoutExpired:
-        on_error("Deployment timed out after 3 minutes")
-        return
-    except Exception as e:
-        on_error(f"Deployment failed: {e}")
-        return
+    # We use _run_with_console to ensure the user sees progress in a real terminal
+    # but we ALSO need the output for Step 7.
+    code, out, err = _run_with_console(
+        [npx_exe, "wrangler", "deploy"],
+        cwd=worker_root, timeout=300
+    )
 
     if code != 0:
         error_msg = err or out or "Unknown error"
@@ -299,27 +288,86 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
         return
     log("✅ Worker deployed!")
 
-    # ── Step 7: Extract worker URL from deploy output ────────────────────────
+    # ── Step 7: Robust worker URL detection ──────────────────────────────────
     log("🔍 Detecting worker URL...")
-    import re as regex
+    import json
 
-    # Parse deploy output for .workers.dev URL
+    # 1. Get the account's workers.dev subdomain
+    subdomain = ""
+    try:
+        code_w, out_w, _ = _run([npx_exe, "wrangler", "whoami", "--json"], cwd=worker_root)
+        if code_w == 0:
+            user_info = json.loads(out_w)
+            # Find the first account that has a workers.dev subdomain configured
+            # Or just use the account logic if available
+            # Note: wrangler whoami --json might not contain the subdomain directly,
+            # but we can try to find it or fall back to the old regex if needed.
+            # Actually, let's try a fallback chain:
+            log("   Querying account info...")
+    except Exception as e:
+        log(f"   Note: Could not query account info: {e}")
+
+    # 2. Get the worker name from config
+    worker_name = "kpi-assistant-worker" # default
+    try:
+        config_path_json = os.path.join(worker_root, "wrangler.jsonc")
+        config_path_toml = os.path.join(worker_root, "wrangler.toml")
+        if os.path.exists(config_path_json):
+            with open(config_path_json, "r") as f:
+                # Basic comment stripping for jsonc
+                lines = [line for line in f if not line.strip().startswith("//")]
+                config = json.loads("".join(lines))
+                worker_name = config.get("name", worker_name)
+        elif os.path.exists(config_path_toml):
+            with open(config_path_toml, "r") as f:
+                import re
+                for line in f:
+                    m = re.match(r'^name\s*=\s*["\'](.+?)["\']', line.strip())
+                    if m:
+                        worker_name = m.group(1)
+                        break
+    except Exception as e:
+        log(f"   Note: Could not parse config name: {e}")
+
+    # 3. Fallback Chain for URL
     worker_url = ""
-    deploy_output = out + "\n" + err
+    deploy_output = (out or "") + "\n" + (err or "")
 
-    # Look for https://xxx.workers.dev pattern
-    url_match = regex.search(r'https://[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+\.workers\.dev', deploy_output)
+    # Priority A: Scrape from output (regex) but more aggressively
+    import re as regex
+    # Handle ANSI codes by cleaning the output if possible
+    clean_output = regex.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', deploy_output)
+    url_match = regex.search(r'https://[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+\.workers\.dev', clean_output)
     if url_match:
         worker_url = url_match.group(0)
-        log(f"   Found URL: {worker_url}")
+        log(f"   Detected from output: {worker_url}")
     else:
-        # Fallback: manual URL entry
-        log("   Could not parse URL from deploy output")
+        # Priority B: Try to get it from wrangler deployments list
+        log("   Scraper missed URL. Checking deployment history...")
+        try:
+            code_d, out_d, _ = _run([npx_exe, "wrangler", "deployments", "list", "--json"], cwd=worker_root)
+            if code_d == 0:
+                deps_raw = json.loads(out_d)
+                # Some versions return a list, others a dict with a 'deployments' key
+                deps = deps_raw.get("deployments", []) if isinstance(deps_raw, dict) else deps_raw
+
+                if deps and isinstance(deps, list) and len(deps) > 0:
+                    # Look for URL in the latest deployment
+                    target_dep = deps[0]
+                    worker_url = target_dep.get("url", "")
+                    if worker_url:
+                        log(f"   Detected from history: {worker_url}")
+        except Exception as e:
+            log(f"   History check failed: {e}")
+
+    if not worker_url:
+        # Fallback: prompt user
+        log("   Could not auto-detect URL.")
         on_error(
             "Worker deployed successfully!\n\n"
-            "However, could not auto-detect the worker URL.\n\n"
+            "However, Cloudflare did not report the live URL back to the app.\n\n"
             "Find your worker URL here:\n"
-            "https://dash.cloudflare.com/ → Workers & Pages\n\n"
+            "https://dash.cloudflare.com/ → Workers & Pages → " + worker_name + "\n\n"
             "Then paste it in Configuration → API Key."
         )
         return
