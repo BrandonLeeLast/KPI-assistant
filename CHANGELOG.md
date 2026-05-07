@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.32
+- Fixed Node.js not detected in deployed EXE — PyInstaller strips PATH, now injects common install locations at runtime
+- Supports standard installer (C:\Program Files\nodejs) and nvm for Windows (scans %APPDATA%\nvm\v* versioned dirs)
+- Added app.worker_deploy and app.ui.worker_wizard to PyInstaller hiddenimports so wizard bundles correctly
+- Removed AUTH_TOKEN from worker — each user's private worker URL is sufficient, no token needed
+
 ## v1.0.31
 - Added one-click "Deploy My Own AI Worker" wizard — deploys user's private Cloudflare Worker from template repo
 - Wizard handles: Node.js check, template download, npm install, CF login, AUTH_TOKEN secret, wrangler deploy, URL detection

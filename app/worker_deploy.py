@@ -34,6 +34,40 @@ _APPDATA    = os.environ.get("APPDATA", os.path.expanduser("~"))
 _WORKER_DIR = os.path.join(_APPDATA, "KPI-assistant", "worker")
 _SI = None  # set on first use — hides console windows
 
+# Common Node.js install locations on Windows (PyInstaller strips PATH)
+_NODE_DIRS = [
+    r"C:\Program Files\nodejs",
+    r"C:\Program Files (x86)\nodejs",
+    os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "nodejs"),
+    os.path.join(os.environ.get("APPDATA", ""), "nvm", "current"),
+]
+
+
+def _full_env() -> dict:
+    """Return os.environ with common Node.js paths appended to PATH."""
+    env  = os.environ.copy()
+    path = env.get("PATH", "")
+
+    candidates = list(_NODE_DIRS)
+
+    # nvm for Windows stores versioned dirs: %APPDATA%\nvm\v22.x.x\
+    nvm_root = os.path.join(os.environ.get("APPDATA", ""), "nvm")
+    if os.path.isdir(nvm_root):
+        try:
+            for entry in sorted(os.listdir(nvm_root), reverse=True):
+                d = os.path.join(nvm_root, entry)
+                if os.path.isdir(d) and entry.startswith("v"):
+                    candidates.append(d)
+                    break  # newest version only
+        except OSError:
+            pass
+
+    for d in candidates:
+        if os.path.isdir(d) and d not in path:
+            path = d + os.pathsep + path
+    env["PATH"] = path
+    return env
+
 
 def _get_si():
     global _SI
@@ -50,6 +84,7 @@ def _run(cmd: list, cwd: str = None, timeout: int = 60) -> tuple[int, str, str]:
             cmd, cwd=cwd, capture_output=True, text=True,
             timeout=timeout, startupinfo=_get_si(),
             creationflags=subprocess.CREATE_NO_WINDOW,
+            env=_full_env(),
         )
         return r.returncode, r.stdout.strip(), r.stderr.strip()
     except subprocess.TimeoutExpired:
@@ -63,7 +98,8 @@ def _run_visible(cmd: list, cwd: str = None,
     """Run with a visible window — needed for wrangler login (browser OAuth)."""
     try:
         r = subprocess.run(
-            cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout,
+            cmd, cwd=cwd, capture_output=True, text=True,
+            timeout=timeout, env=_full_env(),
         )
         return r.returncode, r.stdout.strip(), r.stderr.strip()
     except subprocess.TimeoutExpired:
