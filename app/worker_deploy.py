@@ -108,17 +108,54 @@ def _run_visible(cmd: list, cwd: str = None,
         return -1, "", f"Not found: {cmd[0]}"
 
 
+def _find_exe(name: str) -> str | None:
+    """Find node.exe or npm.cmd in common Windows paths."""
+    # Try shutil.which first with expanded PATH
+    exe = shutil.which(name, path=_full_env()["PATH"])
+    if exe:
+        return exe
+
+    # Explicit search in common dirs
+    exts = [".exe", ".cmd", ""]
+    for d in [r"C:\Program Files\nodejs",
+              r"C:\Program Files (x86)\nodejs",
+              os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "nodejs")]:
+        for ext in exts:
+            path = os.path.join(d, name + ext)
+            if os.path.isfile(path):
+                return path
+
+    # nvm versioned dirs
+    nvm_root = os.path.join(os.environ.get("APPDATA", ""), "nvm")
+    if os.path.isdir(nvm_root):
+        try:
+            for entry in sorted(os.listdir(nvm_root), reverse=True):
+                if entry.startswith("v"):
+                    d = os.path.join(nvm_root, entry)
+                    for ext in exts:
+                        path = os.path.join(d, name + ext)
+                        if os.path.isfile(path):
+                            return path
+        except OSError:
+            pass
+    return None
+
+
 def check_node() -> tuple[bool, str]:
-    code, out, _ = _run(["node", "--version"])
-    if code == 0:
-        return True, out
+    node_exe = _find_exe("node")
+    if node_exe:
+        code, out, _ = _run([node_exe, "--version"])
+        if code == 0:
+            return True, out
     return False, ""
 
 
 def check_npm() -> tuple[bool, str]:
-    code, out, _ = _run(["npm", "--version"])
-    if code == 0:
-        return True, out
+    npm_exe = _find_exe("npm")
+    if npm_exe:
+        code, out, _ = _run([npm_exe, "--version"])
+        if code == 0:
+            return True, out
     return False, ""
 
 
@@ -151,6 +188,13 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
         on_error("npm not found — reinstall Node.js from https://nodejs.org")
         return
     log(f"✅ npm {ver} found.")
+
+    # Find full paths to executables
+    npm_exe = _find_exe("npm")
+    npx_exe = _find_exe("npx")
+    if not npm_exe or not npx_exe:
+        on_error("npm or npx not found — reinstall Node.js")
+        return
 
     # ── Step 2: Download template ─────────────────────────────────────────────
     log("⬇️  Downloading worker template...")
@@ -192,7 +236,7 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
 
     # ── Step 4: npm install ───────────────────────────────────────────────────
     log("📦 Installing dependencies (wrangler)...")
-    code, out, err = _run(["npm", "install"], cwd=worker_root, timeout=120)
+    code, out, err = _run([npm_exe, "install"], cwd=worker_root, timeout=120)
     if code != 0:
         on_error(f"npm install failed:\n{err}")
         return
@@ -202,7 +246,7 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
     log("🌐 Opening browser for Cloudflare login...")
     log("   Complete the login in your browser, then come back here.")
     code, out, err = _run_visible(
-        ["npx", "wrangler", "login"],
+        [npx_exe, "wrangler", "login"],
         cwd=worker_root, timeout=300
     )
     if code != 0:
@@ -213,7 +257,7 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
     # ── Step 6: Deploy ────────────────────────────────────────────────────────
     log("🚀 Deploying worker to Cloudflare...")
     code, out, err = _run(
-        ["npx", "wrangler", "deploy"],
+        [npx_exe, "wrangler", "deploy"],
         cwd=worker_root, timeout=120
     )
     if code != 0:
