@@ -315,13 +315,16 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
             content = regex.sub(r'/\*.*?\*/', '', content, flags=regex.DOTALL)
             config = json.loads(content)
             worker_name = config.get("name", worker_name)
-    except Exception:
-        pass
+            log(f"   Worker name: {worker_name}")
+    except Exception as e:
+        log(f"   Could not read config: {e}")
 
     # Get account subdomain via wrangler whoami
-    code, out, _ = _run([npx_exe, "wrangler", "whoami"], cwd=worker_root, timeout=30)
+    log("   Getting account info from Cloudflare...")
+    code, out, err = _run([npx_exe, "wrangler", "whoami"], cwd=worker_root, timeout=15)
     account_subdomain = ""
-    if code == 0:
+    if code == 0 and out:
+        log(f"   Account info received")
         # Look for account ID or subdomain in output
         for line in out.splitlines():
             # Output format: "Account Name | Account ID"
@@ -333,15 +336,18 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
                     if len(account_id) >= 9:
                         account_subdomain = account_id[:9].lower()
                         break
+    else:
+        log(f"   Could not get account info: {err or 'no output'}")
 
     if account_subdomain:
         worker_url = f"https://{worker_name}.{account_subdomain}.workers.dev"
     else:
         on_error(
             "Worker deployed successfully!\n\n"
-            "However, could not auto-detect the worker URL.\n"
-            "Please copy the URL from the console window above,\n"
-            "then paste it manually in Configuration → API Key."
+            "However, could not auto-detect the worker URL.\n\n"
+            "Find your worker URL here:\n"
+            "https://dash.cloudflare.com/ → Workers & Pages\n\n"
+            "Then paste it in Configuration → API Key."
         )
         return
 
