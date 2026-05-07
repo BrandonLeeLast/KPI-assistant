@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.46
+- Renamed app to KPEye — new logo in topbar, tray, and installer wizard
+- APPDATA path changed to %APPDATA%\KPEye (clean install, no legacy data)
+- Per-provider API key storage — switching providers swaps the key field independently
+- Label changes to "AI URL" for Cloudflare, Ollama, and Custom URL providers
+- Model field hidden for Custom URL provider
+- Deploy Cloudflare Worker button hidden for Custom URL provider
+- Worker URL now parsed directly from wrangler deploy output (no more hanging on whoami)
+- Installer wizard panel uses KPEye logo, text overlay removed
+
 ## v1.0.38
 - Switched worker template to Gemma 4 26B (@cf/google/gemma-4-26b-a4b-it) — no license acceptance required
 - Added worker version tracking — shows "Update Worker" button when new template version available
