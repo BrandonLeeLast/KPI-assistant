@@ -2,7 +2,7 @@ import os
 import sys
 import configparser
 
-APPDATA_DIR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "KPI-assistant")
+APPDATA_DIR = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "KPEye")
 CONFIG_PATH = os.path.join(APPDATA_DIR, "config.ini")
 APP_DIR     = os.path.dirname(os.path.abspath(sys.argv[0]))
 

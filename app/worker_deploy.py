@@ -31,7 +31,7 @@ TEMPLATE_ZIP_URL = (
 )
 
 _APPDATA    = os.environ.get("APPDATA", os.path.expanduser("~"))
-_WORKER_DIR = os.path.join(_APPDATA, "KPI-assistant", "worker")
+_WORKER_DIR = os.path.join(_APPDATA, "KPEye", "worker")
 _SI = None  # set on first use — hides console windows
 
 # Common Node.js install locations on Windows (PyInstaller strips PATH)
@@ -241,7 +241,7 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
 
     # ── Step 2: Download template ─────────────────────────────────────────────
     log("⬇️  Downloading worker template...")
-    zip_path = os.path.join(_APPDATA, "KPI-assistant", "worker_template.zip")
+    zip_path = os.path.join(_APPDATA, "KPEye", "worker_template.zip")
     os.makedirs(os.path.dirname(zip_path), exist_ok=True)
 
     try:

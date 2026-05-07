@@ -46,7 +46,7 @@ VERSION_CHECK_URL = (
 )
 
 _APPDATA     = os.environ.get("APPDATA", os.path.expanduser("~"))
-_UPDATE_DIR  = os.path.join(_APPDATA, "KPI-assistant", "update")
+_UPDATE_DIR  = os.path.join(_APPDATA, "KPEye", "update")
 _SETUP_EXE   = os.path.join(_UPDATE_DIR, "KPEye_Setup.exe")
 
 
