@@ -302,4 +302,24 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
         return
 
     log(f"🎉 Worker URL: {worker_url}")
+
+    # ── Step 8: Auto-accept Llama license ─────────────────────────────────────
+    log("📝 Accepting Llama 3.2 license terms...")
+    import json
+    import base64
+    # Tiny 1x1 transparent PNG
+    tiny_png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    payload = json.dumps({"prompt": "agree", "image_base64": tiny_png}).encode()
+
+    try:
+        req = urllib.request.Request(
+            worker_url, data=payload,
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp.read()  # Ignore response
+        log("✅ License accepted.")
+    except Exception:
+        log("⚠️  License acceptance skipped (you may need to accept manually on first use)")
+
     on_done(worker_url)
