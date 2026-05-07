@@ -82,6 +82,7 @@ def _run(cmd: list, cwd: str = None, timeout: int = 60) -> tuple[int, str, str]:
     try:
         r = subprocess.run(
             cmd, cwd=cwd, capture_output=True, text=True,
+            stdin=subprocess.DEVNULL,  # Prevent hanging on input
             timeout=timeout, startupinfo=_get_si(),
             creationflags=subprocess.CREATE_NO_WINDOW,
             env=_full_env(),
@@ -101,6 +102,23 @@ def _run_visible(cmd: list, cwd: str = None,
             cmd, cwd=cwd, timeout=timeout, env=_full_env(),
         )
         return r.returncode, "", ""
+    except subprocess.TimeoutExpired:
+        return -1, "", "Timed out"
+    except FileNotFoundError:
+        return -1, "", f"Not found: {cmd[0]}"
+
+
+def _run_with_console(cmd: list, cwd: str = None,
+                      timeout: int = 180) -> tuple[int, str, str]:
+    """Run with visible console window — shows live output, also captures for parsing."""
+    try:
+        # No CREATE_NO_WINDOW — lets a console pop up
+        r = subprocess.run(
+            cmd, cwd=cwd, capture_output=True, text=True,
+            stdin=subprocess.DEVNULL, timeout=timeout,
+            env=_full_env(),
+        )
+        return r.returncode, r.stdout.strip(), r.stderr.strip()
     except subprocess.TimeoutExpired:
         return -1, "", "Timed out"
     except FileNotFoundError:
@@ -255,21 +273,21 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
 
     # ── Step 6: Deploy ────────────────────────────────────────────────────────
     log("🚀 Deploying worker to Cloudflare...")
-    code, out, err = _run(
+    log("   (Console window will show live progress)")
+    code, out, err = _run_with_console(
         [npx_exe, "wrangler", "deploy"],
-        cwd=worker_root, timeout=120
+        cwd=worker_root, timeout=180
     )
     if code != 0:
         on_error(f"Deployment failed:\n{err or out}")
         return
     log("✅ Worker deployed!")
 
-    # ── Step 9: Parse worker URL ──────────────────────────────────────────────
+    # ── Step 7: Parse worker URL from output ──────────────────────────────────
+    import re
     worker_url = ""
     for line in (out + "\n" + err).splitlines():
         if "workers.dev" in line:
-            # Extract URL from deploy output
-            import re
             match = re.search(r'https://[\w\-\.]+\.workers\.dev', line)
             if match:
                 worker_url = match.group(0)

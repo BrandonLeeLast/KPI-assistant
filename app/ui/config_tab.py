@@ -141,22 +141,14 @@ def build(parent: ctk.CTkFrame, app) -> None:
     provider_slot = ctk.CTkFrame(scroll, fg_color="transparent")
     provider_slot.pack(fill="x")
 
-    # ── KPI Worker managed badge ───────────────────────────────────────────────
-    kpi_worker_badge = ctk.CTkFrame(provider_slot, fg_color=SURFACE, corner_radius=8)
-    ctk.CTkLabel(kpi_worker_badge,
-                 text="✅  Managed by KPI Worker — no API key required",
-                 text_color=GREEN, font=ctk.CTkFont("Segoe UI", 11),
-                 anchor="w").pack(padx=12, pady=8, fill="x")
-    ctk.CTkLabel(kpi_worker_badge,
-                 text="Your screenshots are processed securely via the official KPI Assistant endpoint.",
-                 text_color=OVERLAY, font=ctk.CTkFont("Segoe UI", 10),
-                 anchor="w").pack(padx=12, pady=(0, 8), fill="x")
-
     # ── Model + API key container ──────────────────────────────────────────────
     provider_config_frame = ctk.CTkFrame(provider_slot, fg_color="transparent")
 
     # ── Model dropdown + custom text input ───────────────────────────────────
-    ctk.CTkLabel(provider_config_frame, text="Model", text_color=SUBTEXT,
+    model_frame = ctk.CTkFrame(provider_config_frame, fg_color="transparent")
+    model_frame.pack(fill="x")
+
+    ctk.CTkLabel(model_frame, text="Model", text_color=SUBTEXT,
                  font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(2, 0))
 
     # Internal var for the dropdown selection — separate from app.model_var
@@ -164,7 +156,7 @@ def build(parent: ctk.CTkFrame, app) -> None:
     _model_choice = tk.StringVar()
 
     model_menu = ctk.CTkOptionMenu(
-        provider_config_frame,
+        model_frame,
         values=[""],
         variable=_model_choice,
         fg_color=SURFACE, button_color=SURFACE2, button_hover_color="#585b70",
@@ -177,7 +169,7 @@ def build(parent: ctk.CTkFrame, app) -> None:
 
     # Custom model text input — shown when "Other" is selected
     custom_model_entry = ctk.CTkEntry(
-        provider_config_frame, textvariable=app.model_var,
+        model_frame, textvariable=app.model_var,
         fg_color=SURFACE, border_color=MAUVE, border_width=1,
         text_color=TEXT, placeholder_text="Type custom model name…",
         placeholder_text_color=OVERLAY,
@@ -218,31 +210,26 @@ def build(parent: ctk.CTkFrame, app) -> None:
                 _model_choice.set(default)
                 custom_model_entry.pack_forget()
 
-        # Never show custom text entry for kpi_worker
-        if provider_key == "kpi_worker":
-            custom_model_entry.pack_forget()
-
     def _on_provider_ui_change(*_):
         _update_model_dropdown()
         p = app.provider_var.get()
 
-        # Show/hide badge vs config frame
-        if p == "KPI Worker":
-            provider_config_frame.pack_forget()
-            ollama_panel.pack_forget()
-            kpi_worker_badge.pack(fill="x", pady=(0, 2))
-        else:
-            kpi_worker_badge.pack_forget()
-            provider_config_frame.pack(fill="x")
+        provider_config_frame.pack(fill="x")
 
-            # Ollama: show URL field (no dots), show setup panel
-            if p == "Ollama":
-                key_entry.configure(show="")
-                ollama_panel.pack(fill="x", pady=(4, 2))
-                app.refresh_ollama_status(lbl_docker, lbl_container, lbl_api)
-            else:
-                key_entry.configure(show="•")
-                ollama_panel.pack_forget()
+        # Hide model field for Cloudflare (uses fixed model in worker)
+        if p == "Cloudflare":
+            model_frame.pack_forget()
+        else:
+            model_frame.pack(fill="x")
+
+        # Ollama: show URL field (no dots), show setup panel
+        if p == "Ollama":
+            key_entry.configure(show="")
+            ollama_panel.pack(fill="x", pady=(4, 2))
+            app.refresh_ollama_status(lbl_docker, lbl_container, lbl_api)
+        else:
+            key_entry.configure(show="•")
+            ollama_panel.pack_forget()
 
     app.provider_var.trace_add("write", _on_provider_ui_change)
     scroll.after(50, _on_provider_ui_change)

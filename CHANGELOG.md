@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.35
+- Removed "KPI Worker" option — all users deploy their own private Cloudflare Worker (free)
+- Model field hidden for Cloudflare provider (uses fixed llama-3.2-11b-vision in worker template)
+- Fixed User-Agent blocking — added `KPI-Assistant/1.0 (Windows)` header to prevent CF bot detection (error 1010)
+- Default provider changed to Cloudflare
+- wrangler deploy now shows console window with live progress output
+
 ## v1.0.32
 - Fixed Node.js not detected in deployed EXE — PyInstaller strips PATH, now injects common install locations at runtime
 - Supports standard installer (C:\Program Files\nodejs) and nvm for Windows (scans %APPDATA%\nvm\v* versioned dirs)

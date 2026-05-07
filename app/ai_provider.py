@@ -20,7 +20,6 @@ from PIL import Image
 
 # ── Provider registry ─────────────────────────────────────────────────────────
 PROVIDERS: dict[str, str] = {
-    "KPI Worker": "kpi_worker",   # default — uses baked-in token, no user key needed
     "Gemini":     "gemini",
     "Claude":     "claude",
     "OpenAI":     "openai",
@@ -30,7 +29,6 @@ PROVIDERS: dict[str, str] = {
 }
 
 DEFAULT_MODELS: dict[str, str] = {
-    "kpi_worker": "",
     "gemini":     "gemini-2.5-flash",
     "claude":     "claude-opus-4-5",
     "openai":     "gpt-4o",
@@ -176,6 +174,7 @@ def _classify_openai(image_path: str, instructions: str,
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type":  "application/json",
+            "User-Agent":    "KPI-Assistant/1.0 (Windows)",
         },
     )
     with urllib.request.urlopen(req, timeout=60) as resp:
@@ -210,7 +209,10 @@ def _classify_ollama(image_path: str, instructions: str,
     req = urllib.request.Request(
         f"{base_url}/api/generate",
         data=payload,
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "User-Agent": "KPI-Assistant/1.0 (Windows)",
+        },
     )
     # 300s timeout — local models can take 30-60s to load into RAM on first call
     try:
@@ -251,6 +253,7 @@ def _classify_kpi_worker(image_path: str, instructions: str,
     headers = {
         "Content-Type":  "application/json",
         "X-Auth-Token":  WORKER_TOKEN,
+        "User-Agent":    "KPI-Assistant/1.0 (Windows)",
     }
 
     req = urllib.request.Request(KPI_WORKER_URL, data=payload, headers=headers)
@@ -307,7 +310,10 @@ def _classify_custom_url(image_path: str, instructions: str,
         "model":        model or "",
     }).encode()
 
-    headers = {"Content-Type": "application/json"}
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "KPI-Assistant/1.0 (Windows)",
+    }
     if auth_token:
         headers["X-Auth-Token"] = auth_token
 

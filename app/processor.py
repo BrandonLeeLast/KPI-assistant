@@ -68,7 +68,7 @@ def process_file(file_path: str, settings, ui) -> None:
 def _classify_and_file(file_path: str, filename: str, user_context: str,
                         settings, ui) -> str:
     from app.ai_provider import PROVIDERS
-    provider_display = settings.get('AI_PROVIDER', 'KPI Worker')
+    provider_display = settings.get('AI_PROVIDER', 'Cloudflare')
     provider      = PROVIDERS.get(provider_display, provider_display.lower().replace(" ", "_"))
     api_key       = settings.get('API_KEY', '') or settings.get('GEMINI_API_KEY', '')
     model         = settings.get('AI_MODEL', '')
