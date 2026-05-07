@@ -44,24 +44,24 @@ def process_file(file_path: str, settings, ui) -> None:
 
         notify_success = settings.get('NOTIFY_ON_SUCCESS', 'false').lower() == 'true'
         if notify_success:
-            ui.notify(f"Filed under: {category}", "KPI Assistant")
+            ui.notify(f"Filed under: {category}", "KPEye")
 
     except Exception as e:
         err = str(e)
         if "429" in err or "RESOURCE_EXHAUSTED" in err:
             ui.log("❌ Rate limit hit — you've exceeded the free tier quota for this model.", "error")
             ui.log("💡 Try: switch to gemini-2.5-flash-lite in Configuration, or wait 24h, or add billing to your Google account.", "warn")
-            ui.notify("Rate limit hit — see log for options", "KPI Assistant")
+            ui.notify("Rate limit hit — see log for options", "KPEye")
         elif "404" in err or "NOT_FOUND" in err:
             ui.log(f"❌ Model not found — '{settings.get('AI_MODEL')}' is invalid or unavailable.", "error")
             ui.log("💡 Go to Configuration and select a valid model from the dropdown.", "warn")
-            ui.notify("Invalid model — check Configuration", "KPI Assistant")
+            ui.notify("Invalid model — check Configuration", "KPEye")
         elif "401" in err or "API_KEY" in err.upper() or "PERMISSION" in err:
             ui.log("❌ Invalid API key — check your key in Configuration.", "error")
-            ui.notify("Invalid API key", "KPI Assistant")
+            ui.notify("Invalid API key", "KPEye")
         else:
             ui.log(f"❌ Analysis error: {e}", "error")
-            ui.notify(f"Failed to process {filename}", "KPI Assistant")
+            ui.notify(f"Failed to process {filename}", "KPEye")
         ui.increment_stat("errors")
 
 

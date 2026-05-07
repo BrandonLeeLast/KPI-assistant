@@ -29,7 +29,7 @@ jobs:
           $newTag  = "v$newVer"
 
           $json.version          = $newVer
-          $json.download_url     = "https://github.com/${{ github.repository }}/releases/download/$newTag/KPI_Assistant_Setup.exe"
+          $json.download_url     = "https://github.com/${{ github.repository }}/releases/download/$newTag/KPEye_Setup.exe"
           $json.release_notes    = ""
           $json | ConvertTo-Json | Set-Content version.json -Encoding utf8
 
@@ -75,11 +75,11 @@ jobs:
       - name: Verify EXE exists
         shell: pwsh
         run: |
-          if (-not (Test-Path "dist\KPI_Assistant.exe")) {
-            Write-Error "Build failed — dist\KPI_Assistant.exe not found"
+          if (-not (Test-Path "dist\KPEye.exe")) {
+            Write-Error "Build failed — dist\KPEye.exe not found"
             exit 1
           }
-          $size = (Get-Item "dist\KPI_Assistant.exe").length / 1MB
+          $size = (Get-Item "dist\KPEye.exe").length / 1MB
           Write-Output "EXE size: $([math]::Round($size,1)) MB"
 
       # ── Install Inno Setup and build installer ───────────────────────────────
@@ -99,11 +99,11 @@ jobs:
           $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
           $ver  = "${{ steps.ver.outputs.VERSION }}"
           & $iscc "installer\setup.iss" "/DMyAppVersion=$ver"
-          if (-not (Test-Path "dist\KPI_Assistant_Setup.exe")) {
-            Write-Error "Installer build failed — dist\KPI_Assistant_Setup.exe not found"
+          if (-not (Test-Path "dist\KPEye_Setup.exe")) {
+            Write-Error "Installer build failed — dist\KPEye_Setup.exe not found"
             exit 1
           }
-          $size = (Get-Item "dist\KPI_Assistant_Setup.exe").length / 1MB
+          $size = (Get-Item "dist\KPEye_Setup.exe").length / 1MB
           Write-Output "Installer size: $([math]::Round($size,1)) MB"
 
       # ── Extract changelog entry ──────────────────────────────────────────────
@@ -126,10 +126,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.TAG }}
-          name: "KPI Assistant ${{ steps.ver.outputs.TAG }}"
+          name: "KPEye ${{ steps.ver.outputs.TAG }}"
           body_path: release_notes.txt
           files: |
-            dist/KPI_Assistant_Setup.exe
+            dist/KPEye_Setup.exe
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

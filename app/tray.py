@@ -18,8 +18,8 @@ def create_tray_icon(on_show, on_toggle, on_exit) -> pystray.Icon:
         pystray.MenuItem("Exit",            on_exit),
     )
     return pystray.Icon(
-        "kpi_assistant",
+        "kpeye",
         build_icon_image(),
-        "KPI Evidence Assistant",
+        "KPEye",
         menu,
     )

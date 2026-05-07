@@ -29,7 +29,7 @@ class KPIDashboardApp(ctk.CTk):
 
     def __init__(self):
         super().__init__()
-        self.title("KPI Evidence Assistant")
+        self.title("KPEye")
         self.geometry("880x640")
         self.minsize(780, 560)
         self.configure(fg_color=BG)
@@ -98,12 +98,22 @@ class KPIDashboardApp(ctk.CTk):
         left = ctk.CTkFrame(bar, fg_color="transparent")
         left.pack(side="left", padx=20, pady=10)
 
-        ctk.CTkLabel(left, text="⬡", text_color=MAUVE,
-                     font=ctk.CTkFont("Segoe UI", 26)).pack(side="left", padx=(0, 8))
+        try:
+            from PIL import Image
+            import customtkinter as _ctk
+            _icon_path = os.path.join(
+                getattr(sys, '_MEIPASS', os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
+                "static", "KPEye.png"
+            )
+            _logo_img = _ctk.CTkImage(Image.open(_icon_path), size=(40, 40))
+            ctk.CTkLabel(left, image=_logo_img, text="").pack(side="left", padx=(0, 8))
+        except Exception:
+            ctk.CTkLabel(left, text="👁", text_color=MAUVE,
+                         font=ctk.CTkFont("Segoe UI", 26)).pack(side="left", padx=(0, 8))
 
         title_block = ctk.CTkFrame(left, fg_color="transparent")
         title_block.pack(side="left")
-        ctk.CTkLabel(title_block, text="KPI Assistant", text_color=TEXT,
+        ctk.CTkLabel(title_block, text="KPEye", text_color=TEXT,
                      font=ctk.CTkFont("Segoe UI", 16, weight="bold")).pack(anchor="w")
         ctk.CTkLabel(title_block, text="Portfolio Evidence Collector", text_color=OVERLAY,
                      font=ctk.CTkFont("Segoe UI", 9)).pack(anchor="w")
@@ -171,7 +181,7 @@ class KPIDashboardApp(ctk.CTk):
 
     def minimize_to_tray(self) -> None:
         self.withdraw()
-        self.tray_icon.notify("Running in background.", "KPI Assistant")
+        self.tray_icon.notify("Running in background.", "KPEye")
 
     def restore_from_tray(self, *_) -> None:
         self.after(0, self.deiconify)
@@ -193,7 +203,7 @@ class KPIDashboardApp(ctk.CTk):
             self.log_text.config(state="disabled")
         self.after(0, _append)
 
-    def notify(self, message: str, title: str = "KPI Assistant") -> None:
+    def notify(self, message: str, title: str = "KPEye") -> None:
         """Non-intrusive tray balloon notification — fires from any thread."""
         if self.tray_icon:
             try:

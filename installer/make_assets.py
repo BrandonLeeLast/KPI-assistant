@@ -89,7 +89,7 @@ def make_wizard_panel():
     draw = ImageDraw.Draw(img)
 
     # App name + tagline overlay at bottom
-    draw.text((12, 220), "KPI Assistant", font=_font(16), fill=TEXT)
+    draw.text((12, 220), "KPEye", font=_font(16), fill=TEXT)
     draw.text((12, 242), "Born to explore", font=_font(9), fill=MAUVE)
     draw.text((12, 254), "the cosmos.", font=_font(9), fill=MAUVE)
     draw.text((12, 268), "Forced to watch", font=_font(9), fill=OVERLAY)
@@ -100,44 +100,37 @@ def make_wizard_panel():
 
 
 def make_wizard_small():
-    """55x58 top-right header icon — hex on dark background."""
-    img  = Image.new("RGB", (55, 58), BG)
-    draw = ImageDraw.Draw(img)
-    draw.text((4, 2), "⬡", font=_font(46), fill=MAUVE)
+    """55x58 top-right header icon — KPEye logo on dark background."""
+    logo_path = os.path.join(OUT, "KPEye.png")
+    if os.path.exists(logo_path):
+        logo = Image.open(logo_path).convert("RGBA")
+        img = Image.new("RGB", (55, 58), BG)
+        logo = logo.resize((46, 46), Image.LANCZOS)
+        img.paste(logo, (4, 6), logo)
+    else:
+        img  = Image.new("RGB", (55, 58), BG)
+        ImageDraw.Draw(img).text((4, 2), "👁", font=_font(46), fill=MAUVE)
     img.save(os.path.join(OUT, "wizard_small.bmp"), "BMP")
     print("wizard_small.bmp generated")
 
 
 def make_icon():
-    """
-    Generate a simple .ico file with multiple sizes.
-    Uses a dark circle with the hex ⬡ symbol.
-    """
+    """Generate .ico from KPEye.png at multiple sizes."""
+    logo_path = os.path.join(OUT, "KPEye.png")
     sizes = [256, 128, 64, 48, 32, 16]
     frames = []
 
-    for size in sizes:
-        img  = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(img)
-
-        # Dark circle background
-        pad = size // 16
-        draw.ellipse([pad, pad, size - pad, size - pad], fill=(*BG, 255))
-
-        # Hex symbol centred
-        font_size = int(size * 0.65)
-        fnt = _font(font_size)
-        try:
-            bbox = draw.textbbox((0, 0), "⬡", font=fnt)
-            tw = bbox[2] - bbox[0]
-            th = bbox[3] - bbox[1]
-        except Exception:
-            tw, th = font_size, font_size
-        x = (size - tw) // 2 - 1
-        y = (size - th) // 2 - 2
-        draw.text((x, y), "⬡", font=fnt, fill=(*MAUVE, 255))
-
-        frames.append(img)
+    if os.path.exists(logo_path):
+        src = Image.open(logo_path).convert("RGBA")
+        for size in sizes:
+            frames.append(src.resize((size, size), Image.LANCZOS))
+    else:
+        for size in sizes:
+            img  = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(img)
+            pad = size // 16
+            draw.ellipse([pad, pad, size - pad, size - pad], fill=(*BG, 255))
+            frames.append(img)
 
     frames[0].save(
         os.path.join(OUT, "app_icon.ico"),

@@ -23,7 +23,7 @@ def ask_context(file_path: str, level: str) -> str | None:
 
     # ── Window ────────────────────────────────────────────────────────────────
     dlg = ctk.CTkToplevel()
-    dlg.title("KPI Assistant  ·  Add Context")
+    dlg.title("KPEye  ·  Add Context")
     dlg.geometry("520x400")
     dlg.resizable(False, False)
     dlg.configure(fg_color=BG)

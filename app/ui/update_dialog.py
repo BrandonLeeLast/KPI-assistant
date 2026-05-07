@@ -21,7 +21,7 @@ class UpdateProgressWindow:
         win = ctk.CTkToplevel(parent)
         self._win = win
 
-        win.title("KPI Assistant — Updating")
+        win.title("KPEye — Updating")
         win.geometry("440x210")
         win.resizable(False, False)
         win.configure(fg_color=BG)
@@ -39,7 +39,7 @@ class UpdateProgressWindow:
         hdr.pack_propagate(False)
         ctk.CTkLabel(hdr, text="⬡", text_color=MAUVE,
                      font=ctk.CTkFont("Segoe UI", 20)).pack(side="left", padx=(14, 6), pady=8)
-        ctk.CTkLabel(hdr, text="Updating KPI Assistant",
+        ctk.CTkLabel(hdr, text="Updating KPEye",
                      text_color=TEXT,
                      font=ctk.CTkFont("Segoe UI", 13, weight="bold")).pack(side="left")
 

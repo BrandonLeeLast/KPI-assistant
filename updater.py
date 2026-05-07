@@ -47,7 +47,7 @@ VERSION_CHECK_URL = (
 
 _APPDATA     = os.environ.get("APPDATA", os.path.expanduser("~"))
 _UPDATE_DIR  = os.path.join(_APPDATA, "KPI-assistant", "update")
-_SETUP_EXE   = os.path.join(_UPDATE_DIR, "KPI_Assistant_Setup.exe")
+_SETUP_EXE   = os.path.join(_UPDATE_DIR, "KPEye_Setup.exe")
 
 
 def _fetch_remote_version_info() -> dict | None:

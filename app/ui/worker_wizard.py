@@ -24,7 +24,7 @@ class WorkerWizard:
 
         win = ctk.CTkToplevel(parent)
         self._win = win
-        win.title("KPI Assistant — Deploy Your AI Worker")
+        win.title("KPEye — Deploy Your AI Worker")
         win.geometry("560x520")
         win.resizable(False, False)
         win.configure(fg_color=BG)

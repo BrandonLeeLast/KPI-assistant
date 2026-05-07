@@ -12,6 +12,7 @@ a = Analysis(
         ('version.json',            '.'),
         ('app/skills_matrix',       'app/skills_matrix'),
         ('_token.txt',              '.'),
+        ('static',                  'static'),
     ],
     hiddenimports=[
         'app',
@@ -79,7 +80,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='KPI_Assistant',
+    name='KPEye',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

@@ -1,9 +1,9 @@
-; KPI Assistant — Inno Setup installer script
+; KPEye — Inno Setup installer script
 
-#define MyAppName      "KPI Assistant"
+#define MyAppName      "KPEye"
 #define MyAppPublisher "Brandon Lee"
 #define MyAppURL       "https://github.com/BrandonLeeLast/KPI-assistant"
-#define MyAppExeName   "KPI_Assistant.exe"
+#define MyAppExeName   "KPEye.exe"
 #ifndef MyAppVersion
   #define MyAppVersion "1.0.0"
 #endif
@@ -17,13 +17,13 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 ; Install to LocalAppData\Programs — no UAC prompt needed
-DefaultDirName={localappdata}\Programs\KPI-assistant
+DefaultDirName={localappdata}\Programs\KPEye
 DefaultGroupName={#MyAppName}
 DisableDirPage=no
 AllowNoIcons=yes
 ; Output
 OutputDir=..\dist
-OutputBaseFilename=KPI_Assistant_Setup
+OutputBaseFilename=KPEye_Setup
 ; Compression
 Compression=lzma2/ultra64
 SolidCompression=yes
@@ -46,9 +46,9 @@ VersionInfoDescription={#MyAppName} Setup
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Messages]
-WelcomeLabel1=Welcome to KPI Assistant Setup
-WelcomeLabel2=Born to explore the cosmos. Forced to watch C:\Users\User\KPI_Proof.%n%nThis wizard will install KPI Assistant on your computer. Click Next to continue.
-FinishedLabel=KPI Assistant has been installed. Your evidence folder awaits.%n%nBorn to explore the cosmos. Forced to watch KPI_Proof.
+WelcomeLabel1=Welcome to KPEye Setup
+WelcomeLabel2=Born to explore the cosmos. Forced to watch C:\Users\User\KPI_Proof.%n%nThis wizard will install KPEye on your computer. Click Next to continue.
+FinishedLabel=KPEye has been installed. Your evidence folder awaits.%n%nBorn to explore the cosmos. Forced to watch KPI_Proof.
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional icons:"; Flags: unchecked
