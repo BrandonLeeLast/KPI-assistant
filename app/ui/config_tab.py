@@ -210,33 +210,42 @@ def build(parent: ctk.CTkFrame, app) -> None:
                 _model_choice.set(default)
                 custom_model_entry.pack_forget()
 
+    _URL_PROVIDERS = {"Cloudflare", "Ollama", "Custom URL"}
+
     def _on_provider_ui_change(*_):
         _update_model_dropdown()
         p = app.provider_var.get()
 
         provider_config_frame.pack(fill="x")
 
-        # Hide model field for Cloudflare (uses fixed model in worker)
-        if p == "Cloudflare":
+        # Hide model field for providers that don't need it
+        if p in ("Cloudflare", "Custom URL"):
             model_frame.pack_forget()
         else:
             model_frame.pack(fill="x")
 
-        # Ollama: show URL field (no dots), show setup panel
-        if p == "Ollama":
+        # Update label and mask based on whether field is a URL or API key
+        if p in _URL_PROVIDERS:
+            api_key_label.configure(text="AI URL")
             key_entry.configure(show="")
+        else:
+            api_key_label.configure(text="API Key")
+            key_entry.configure(show="•")
+
+        # Ollama: also show setup panel
+        if p == "Ollama":
             ollama_panel.pack(fill="x", pady=(4, 2))
             app.refresh_ollama_status(lbl_docker, lbl_container, lbl_api)
         else:
-            key_entry.configure(show="•")
             ollama_panel.pack_forget()
 
     app.provider_var.trace_add("write", _on_provider_ui_change)
     scroll.after(50, _on_provider_ui_change)
 
     # ── API Key ───────────────────────────────────────────────────────────────
-    ctk.CTkLabel(provider_config_frame, text="API Key", text_color=SUBTEXT,
-                 font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(4, 0))
+    api_key_label = ctk.CTkLabel(provider_config_frame, text="API Key", text_color=SUBTEXT,
+                                  font=ctk.CTkFont("Segoe UI", 10), anchor="w")
+    api_key_label.pack(fill="x", pady=(4, 0))
 
     key_row = ctk.CTkFrame(provider_config_frame, fg_color="transparent")
     key_row.pack(fill="x", pady=(0, 2))
