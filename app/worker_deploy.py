@@ -98,10 +98,9 @@ def _run_visible(cmd: list, cwd: str = None,
     """Run with a visible window — needed for wrangler login (browser OAuth)."""
     try:
         r = subprocess.run(
-            cmd, cwd=cwd, capture_output=True, text=True,
-            timeout=timeout, env=_full_env(),
+            cmd, cwd=cwd, timeout=timeout, env=_full_env(),
         )
-        return r.returncode, r.stdout.strip(), r.stderr.strip()
+        return r.returncode, "", ""
     except subprocess.TimeoutExpired:
         return -1, "", "Timed out"
     except FileNotFoundError:
