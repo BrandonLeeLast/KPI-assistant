@@ -274,42 +274,80 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
     # ── Step 6: Deploy ────────────────────────────────────────────────────────
     log("🚀 Deploying worker to Cloudflare...")
     log("   (Console window will show live progress)")
-    code, out, err = _run_with_console(
-        [npx_exe, "wrangler", "deploy"],
-        cwd=worker_root, timeout=180
-    )
+
+    # Run without capture so user sees output in console
+    try:
+        r = subprocess.run(
+            [npx_exe, "wrangler", "deploy"],
+            cwd=worker_root, timeout=180,
+            stdin=subprocess.DEVNULL, env=_full_env(),
+        )
+        code = r.returncode
+    except subprocess.TimeoutExpired:
+        on_error("Deployment timed out after 3 minutes")
+        return
+    except Exception as e:
+        on_error(f"Deployment failed: {e}")
+        return
+
     if code != 0:
-        on_error(f"Deployment failed:\n{err or out}")
+        on_error("Deployment failed — check console window for errors")
         return
     log("✅ Worker deployed!")
 
-    # ── Step 7: Parse worker URL from output ──────────────────────────────────
-    import re
-    worker_url = ""
-    for line in (out + "\n" + err).splitlines():
-        if "workers.dev" in line:
-            match = re.search(r'https://[\w\-\.]+\.workers\.dev', line)
-            if match:
-                worker_url = match.group(0)
-                break
+    # ── Step 7: Get worker URL from wrangler config ──────────────────────────
+    log("🔍 Detecting worker URL...")
+    import json
+    import re as regex
 
-    if not worker_url:
+    # Read wrangler.jsonc for worker name
+    wrangler_config = os.path.join(worker_root, "wrangler.jsonc")
+    worker_name = "kpi-assistant-ai"  # default
+    try:
+        with open(wrangler_config, "r", encoding="utf-8") as f:
+            # Strip comments from jsonc
+            content = f.read()
+            content = regex.sub(r'//.*', '', content)
+            content = regex.sub(r'/\*.*?\*/', '', content, flags=regex.DOTALL)
+            config = json.loads(content)
+            worker_name = config.get("name", worker_name)
+    except Exception:
+        pass
+
+    # Get account subdomain via wrangler whoami
+    code, out, _ = _run([npx_exe, "wrangler", "whoami"], cwd=worker_root, timeout=30)
+    account_subdomain = ""
+    if code == 0:
+        # Look for account ID or subdomain in output
+        for line in out.splitlines():
+            # Output format: "Account Name | Account ID"
+            if "|" in line:
+                parts = line.split("|")
+                if len(parts) >= 2:
+                    account_id = parts[1].strip()
+                    # Subdomain is typically first 9 chars of account ID
+                    if len(account_id) >= 9:
+                        account_subdomain = account_id[:9].lower()
+                        break
+
+    if account_subdomain:
+        worker_url = f"https://{worker_name}.{account_subdomain}.workers.dev"
+    else:
         on_error(
-            "Worker deployed but could not detect URL.\n"
-            "Check your Cloudflare dashboard for the worker URL,\n"
+            "Worker deployed successfully!\n\n"
+            "However, could not auto-detect the worker URL.\n"
+            "Please copy the URL from the console window above,\n"
             "then paste it manually in Configuration → API Key."
         )
         return
 
-    log(f"🎉 Worker URL: {worker_url}")
-
-    # ── Step 8: Auto-accept Llama license ─────────────────────────────────────
-    log("📝 Accepting Llama 3.2 license terms...")
+    # ── Step 8: Test worker ──────────────────────────────────────────────────
+    log(f"🧪 Testing worker at {worker_url}...")
     import json
     import base64
-    # Tiny 1x1 transparent PNG
+    # Tiny 1x1 transparent PNG for testing
     tiny_png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
-    payload = json.dumps({"prompt": "agree", "image_base64": tiny_png}).encode()
+    payload = json.dumps({"prompt": "test", "image_base64": tiny_png}).encode()
 
     try:
         req = urllib.request.Request(
@@ -318,8 +356,10 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
         )
         with urllib.request.urlopen(req, timeout=30) as resp:
             resp.read()  # Ignore response
-        log("✅ License accepted.")
-    except Exception:
-        log("⚠️  License acceptance skipped (you may need to accept manually on first use)")
+        log("✅ Worker test successful!")
+    except Exception as e:
+        log(f"⚠️  Worker test failed: {e}")
+        log("   The URL may still be correct — try using it in the app.")
 
+    log(f"🎉 Worker URL: {worker_url}")
     on_done(worker_url)

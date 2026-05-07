@@ -324,21 +324,6 @@ def _classify_custom_url(image_path: str, instructions: str,
             data = json.loads(resp.read())
     except urllib.error.HTTPError as e:
         body = e.read().decode(errors="replace")
-
-        # Special handling for Llama license agreement error
-        if "5016" in body and "agree" in body.lower():
-            raise RuntimeError(
-                "Cloudflare requires you to accept the Llama 3.2 license before using this model.\n\n"
-                "To accept:\n"
-                "1. Open: https://dash.cloudflare.com/\n"
-                "2. Go to Workers & Pages → AI\n"
-                "3. Click 'Accept' on the Llama license prompt\n\n"
-                "Or run this in your terminal:\n"
-                f"curl -X POST {url} -H 'Content-Type: application/json' "
-                "-d '{\"prompt\":\"agree\",\"image_base64\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\"}'\n\n"
-                "Then try again."
-            ) from e
-
         raise RuntimeError(f"Custom endpoint returned {e.code}: {body}") from e
 
     if "response" not in data:

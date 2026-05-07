@@ -1,8 +1,9 @@
 # Changelog
 
 ## v1.0.35
+- Switched worker template to Gemma 4 26B (@cf/google/gemma-4-26b-a4b-it) — no license acceptance required
 - Removed "KPI Worker" option — all users deploy their own private Cloudflare Worker (free)
-- Model field hidden for Cloudflare provider (uses fixed llama-3.2-11b-vision in worker template)
+- Model field hidden for Cloudflare provider (uses fixed gemma-4-26b-a4b-it in worker template)
 - Fixed User-Agent blocking — added `KPI-Assistant/1.0 (Windows)` header to prevent CF bot detection (error 1010)
 - Default provider changed to Cloudflare
 - wrangler deploy now shows console window with live progress output
