@@ -136,8 +136,13 @@ def build(parent: ctk.CTkFrame, app) -> None:
     )
     provider_menu.pack(fill="x", pady=(0, 4))
 
-    # ── KPI Worker managed badge — shown only for KPI Worker ─────────────────
-    kpi_worker_badge = ctk.CTkFrame(scroll, fg_color=SURFACE, corner_radius=8)
+    # ── Slot frame — sits right under provider dropdown, always visible ───────
+    # Badge and config frame swap inside this slot so position never changes
+    provider_slot = ctk.CTkFrame(scroll, fg_color="transparent")
+    provider_slot.pack(fill="x")
+
+    # ── KPI Worker managed badge ───────────────────────────────────────────────
+    kpi_worker_badge = ctk.CTkFrame(provider_slot, fg_color=SURFACE, corner_radius=8)
     ctk.CTkLabel(kpi_worker_badge,
                  text="✅  Managed by KPI Worker — no API key required",
                  text_color=GREEN, font=ctk.CTkFont("Segoe UI", 11),
@@ -147,8 +152,8 @@ def build(parent: ctk.CTkFrame, app) -> None:
                  text_color=OVERLAY, font=ctk.CTkFont("Segoe UI", 10),
                  anchor="w").pack(padx=12, pady=(0, 8), fill="x")
 
-    # ── Model + API key container — hidden for KPI Worker ────────────────────
-    provider_config_frame = ctk.CTkFrame(scroll, fg_color="transparent")
+    # ── Model + API key container ──────────────────────────────────────────────
+    provider_config_frame = ctk.CTkFrame(provider_slot, fg_color="transparent")
 
     # ── Model dropdown + custom text input ───────────────────────────────────
     ctk.CTkLabel(provider_config_frame, text="Model", text_color=SUBTEXT,
@@ -213,18 +218,33 @@ def build(parent: ctk.CTkFrame, app) -> None:
                 _model_choice.set(default)
                 custom_model_entry.pack_forget()
 
+        # Never show custom text entry for kpi_worker
+        if provider_key == "kpi_worker":
+            custom_model_entry.pack_forget()
+
     def _on_provider_ui_change(*_):
         _update_model_dropdown()
-        if app.provider_var.get() == "KPI Worker":
+        p = app.provider_var.get()
+
+        # Show/hide badge vs config frame
+        if p == "KPI Worker":
             provider_config_frame.pack_forget()
-            kpi_worker_badge.pack(fill="x", pady=(4, 2))
+            ollama_panel.pack_forget()
+            kpi_worker_badge.pack(fill="x", pady=(0, 2))
         else:
             kpi_worker_badge.pack_forget()
             provider_config_frame.pack(fill="x")
 
-    app.provider_var.trace_add("write", _on_provider_ui_change)
+            # Ollama: show URL field (no dots), show setup panel
+            if p == "Ollama":
+                key_entry.configure(show="")
+                ollama_panel.pack(fill="x", pady=(4, 2))
+                app.refresh_ollama_status(lbl_docker, lbl_container, lbl_api)
+            else:
+                key_entry.configure(show="•")
+                ollama_panel.pack_forget()
 
-    # Initialise on first build
+    app.provider_var.trace_add("write", _on_provider_ui_change)
     scroll.after(50, _on_provider_ui_change)
 
     # ── API Key ───────────────────────────────────────────────────────────────
@@ -271,8 +291,8 @@ def build(parent: ctk.CTkFrame, app) -> None:
     app.provider_var.trace_add("write", _update_api_hint)
     scroll.after(60, _update_api_hint)
 
-    # ── Ollama setup panel — only visible when Ollama is selected ─────────────
-    ollama_panel = ctk.CTkFrame(scroll, fg_color=BG2, corner_radius=10)
+    # ── Ollama setup panel — lives in provider_slot so it stays under provider dropdown
+    ollama_panel = ctk.CTkFrame(provider_slot, fg_color=BG2, corner_radius=10)
 
     # Status indicators
     status_row = ctk.CTkFrame(ollama_panel, fg_color="transparent")
@@ -338,15 +358,6 @@ def build(parent: ctk.CTkFrame, app) -> None:
         btn_setup.configure(state="normal", text="⚙  Setup Ollama")
         mb.showerror("Ollama Setup Failed", msg)
 
-    def _toggle_ollama_panel(*_):
-        if app.provider_var.get() == "Ollama":
-            ollama_panel.pack(fill="x", pady=(4, 2))
-            app.refresh_ollama_status(lbl_docker, lbl_container, lbl_api)
-        else:
-            ollama_panel.pack_forget()
-
-    app.provider_var.trace_add("write", _toggle_ollama_panel)
-    scroll.after(80, _toggle_ollama_panel)
 
     divider()
 

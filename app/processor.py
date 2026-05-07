@@ -67,9 +67,11 @@ def process_file(file_path: str, settings, ui) -> None:
 
 def _classify_and_file(file_path: str, filename: str, user_context: str,
                         settings, ui) -> str:
-    provider      = settings.get('AI_PROVIDER', 'Gemini')
+    from app.ai_provider import PROVIDERS
+    provider_display = settings.get('AI_PROVIDER', 'KPI Worker')
+    provider      = PROVIDERS.get(provider_display, provider_display.lower().replace(" ", "_"))
     api_key       = settings.get('API_KEY', '') or settings.get('GEMINI_API_KEY', '')
-    model         = settings.get('AI_MODEL', 'gemini-2.0-flash')
+    model         = settings.get('AI_MODEL', '')
     level         = settings.get('MY_LEVEL', 'Intermediate')
     custom_prompt = settings.get('CONTEXT_PROMPT', '')
 
@@ -77,8 +79,8 @@ def _classify_and_file(file_path: str, filename: str, user_context: str,
     instructions = build_classification_prompt(level, user_context, custom_prompt)
     valid_cats   = get_categories_for_level(level)
 
-    ui.log(f"🤖 Calling {provider} ({model}) | Level: {level}", "info")
-    if provider.lower() == "ollama":
+    ui.log(f"🤖 Calling {provider_display} ({model}) | Level: {level}", "info")
+    if provider == "ollama":
         ui.log("⏳ Ollama: first call may take 30-60s while model loads into RAM…", "warn")
 
     res = classify(file_path, instructions, provider, api_key, model)
