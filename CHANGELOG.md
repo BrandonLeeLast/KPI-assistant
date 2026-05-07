@@ -1,12 +1,15 @@
 # Changelog
 
-## v1.0.35
+## v1.0.38
 - Switched worker template to Gemma 4 26B (@cf/google/gemma-4-26b-a4b-it) — no license acceptance required
+- Added worker version tracking — shows "Update Worker" button when new template version available
+- Worker GET /version endpoint for version checking
 - Removed "KPI Worker" option — all users deploy their own private Cloudflare Worker (free)
 - Model field hidden for Cloudflare provider (uses fixed gemma-4-26b-a4b-it in worker template)
 - Fixed User-Agent blocking — added `KPI-Assistant/1.0 (Windows)` header to prevent CF bot detection (error 1010)
 - Default provider changed to Cloudflare
-- wrangler deploy now shows console window with live progress output
+- Deployment wizard now reads URL from wrangler config + tests worker after deploy
+- wrangler deploy shows console window with live progress output
 
 ## v1.0.32
 - Fixed Node.js not detected in deployed EXE — PyInstaller strips PATH, now injects common install locations at runtime

@@ -33,6 +33,7 @@ a = Analysis(
         'app.kpa_context',
         'app.worker_deploy',
         'app.ui.worker_wizard',
+        'app.worker_version',
         'anthropic',
         'openai',
         'app.ui.capture_overlay',

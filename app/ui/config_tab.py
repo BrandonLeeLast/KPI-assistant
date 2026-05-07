@@ -273,12 +273,46 @@ def build(parent: ctk.CTkFrame, app) -> None:
         command=lambda: _open_deploy_wizard(),
     )
 
+    # Update worker button — shown when deployed worker is outdated
+    update_btn = ctk.CTkButton(
+        provider_config_frame,
+        text="⚠️  Worker Update Available — Redeploy",
+        fg_color=YELLOW, hover_color="#e5c890", text_color=HEADER_BG,
+        font=ctk.CTkFont("Segoe UI", 11, weight="bold"),
+        corner_radius=8, height=36,
+        command=lambda: _open_deploy_wizard(),
+    )
+
+    def _check_worker_version():
+        """Check if deployed worker is outdated and show update button if needed."""
+        p = app.provider_var.get()
+        if p != "Cloudflare":
+            update_btn.pack_forget()
+            return
+
+        worker_url = app.api_key_var.get()
+        if not worker_url or "|" in worker_url:  # Has auth token
+            update_btn.pack_forget()
+            return
+
+        from app.worker_version import check_worker_version
+        is_outdated, deployed, latest = check_worker_version(worker_url)
+
+        if is_outdated:
+            update_btn.configure(
+                text=f"⚠️  Worker v{deployed} → v{latest} Available — Redeploy"
+            )
+            update_btn.pack(fill="x", pady=(4, 2))
+        else:
+            update_btn.pack_forget()
+
     def _open_deploy_wizard():
         from app.ui.worker_wizard import WorkerWizard
         def _on_done(url):
             app.api_key_var.set(url)
-            app.provider_var.set("Custom URL")
+            app.provider_var.set("Cloudflare")
             app.save_settings()
+            _check_worker_version()  # Re-check after deploy
             app.log(f"✅ Worker deployed: {url}", "success")
         WorkerWizard(app, _on_done)
 
@@ -300,7 +334,10 @@ def build(parent: ctk.CTkFrame, app) -> None:
     }
 
     app.provider_var.trace_add("write", _update_api_hint)
+    app.provider_var.trace_add("write", lambda *_: scroll.after(100, _check_worker_version))
+    app.api_key_var.trace_add("write", lambda *_: scroll.after(100, _check_worker_version))
     scroll.after(60, _update_api_hint)
+    scroll.after(100, _check_worker_version)
 
     # ── Ollama setup panel — lives in provider_slot so it stays under provider dropdown
     ollama_panel = ctk.CTkFrame(provider_slot, fg_color=BG2, corner_radius=10)
