@@ -668,9 +668,11 @@ def build(parent: ctk.CTkFrame, app) -> None:
         "When on: original screenshot is deleted from the watch folder after it's been filed.",
     )
     toggle_row2(
-        "Sync evidence to Cloudflare R2",
+        "Sync evidence to Cloudflare R2  (optional)",
         app.r2_sync_var, TEAL,
-        "Auto-upload each filed screenshot + summary to your R2 bucket. Requires Cloudflare provider.",
+        "Auto-upload each filed screenshot + summary to your R2 bucket. Requires Cloudflare provider.\n"
+        "⚠️  R2 requires billing enabled on your Cloudflare account (free tier — no charge unless you exceed 10GB).\n"
+        "Enable at: dash.cloudflare.com → R2 Object Storage → Enable R2.",
     )
 
     ctk.CTkLabel(scroll, text="KPA Categories (comma-separated)", text_color=SUBTEXT,
