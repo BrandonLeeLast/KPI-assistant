@@ -1,3 +1,4 @@
+import os
 import threading
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -27,10 +28,14 @@ class WatcherDaemon:
     def start(self, settings) -> None:
         if self.running:
             return
+        watch_folder = settings.get('WATCH_FOLDER', '')
+        if not watch_folder or not os.path.exists(watch_folder):
+            self.ui.log(f"❌ Watch folder does not exist: {watch_folder}", "error")
+            return
         self.observer = Observer()
         self.observer.schedule(
             GeminiKPIHandler(settings, self.ui),
-            settings.get('WATCH_FOLDER'),
+            watch_folder,
             recursive=False,
         )
         self.observer.start()

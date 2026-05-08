@@ -238,7 +238,12 @@ class KPIDashboardApp(ctk.CTk):
     def start_service(self) -> None:
         key = self.api_key_var.get().strip()
         if not key or key == "YOUR_API_KEY_HERE":
-            self.log("⚠️  Enter your Gemini API key in Configuration first.", "warn")
+            self.log("⚠️  Enter your AI URL or API key in Configuration first.", "warn")
+            self.tabview.set("  Configuration  ")
+            return
+        watch_folder = self.config_data['DEFAULT'].get('WATCH_FOLDER', '')
+        if not watch_folder or not os.path.exists(watch_folder):
+            self.log("⚠️  Watch folder not found — set it in Configuration.", "warn")
             self.tabview.set("  Configuration  ")
             return
         self.watcher.start(self.config_data['DEFAULT'])
