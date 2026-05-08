@@ -31,10 +31,21 @@ def process_file(file_path: str, settings, ui) -> None:
     show_context = settings.get('SHOW_CONTEXT',  'true').lower() == 'true'
 
     if auto and show_context:
-        user_context = ask_context(file_path, settings.get('MY_LEVEL'))
-        if user_context is None:
+        import threading
+        result = [None]
+        done   = threading.Event()
+
+        def _show():
+            result[0] = ask_context(file_path, settings.get('MY_LEVEL'))
+            done.set()
+
+        ui.after(0, _show)
+        done.wait()
+
+        if result[0] is None:
             ui.log(f"⏭  Skipped — context cancelled: {filename}", "warn")
             return
+        user_context = result[0]
     else:
         user_context = ""
 
