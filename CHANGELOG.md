@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.0.50
+- Fixed AI Mode not returning any content 
+
 ## v1.0.46
 - Renamed app to KPEye — new logo in topbar, tray, and installer wizard
 - APPDATA path changed to %APPDATA%\KPEye (clean install, no legacy data)
