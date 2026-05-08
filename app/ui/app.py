@@ -395,6 +395,8 @@ class KPIDashboardApp(ctk.CTk):
         self._capture_active = True
         watch_folder = self.watch_folder_var.get()
         launch_overlay(watch_folder, self._on_screenshot_captured)
+        # Safety reset — if callback is never called, unblock after 30s
+        self.after(30_000, lambda: setattr(self, '_capture_active', False))
 
     def _on_screenshot_captured(self, filepath: str) -> None:
         self._capture_active = False

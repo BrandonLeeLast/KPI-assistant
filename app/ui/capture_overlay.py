@@ -119,7 +119,9 @@ class CaptureOverlay:
         self._close_all()
 
         if width < 10 or height < 10:
-            return  # too small — treat as accidental click
+            if self._on_captured:
+                self._on_captured(None)  # reset guard flag
+            return
 
         self._capture(left, top, width, height)
 
@@ -163,7 +165,14 @@ def launch_overlay(watch_folder: str, on_captured: Callable[[str], None]) -> Non
     the main Tkinter loop. The overlay creates its own Tk root internally.
     """
     def _run():
-        CaptureOverlay(watch_folder, on_captured)
+        try:
+            CaptureOverlay(watch_folder, on_captured)
+        except Exception:
+            # Ensure guard flag is always reset even if overlay crashes
+            try:
+                on_captured(None)
+            except Exception:
+                pass
 
     t = threading.Thread(target=_run, daemon=True)
     t.start()
