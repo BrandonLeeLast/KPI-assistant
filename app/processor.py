@@ -145,6 +145,15 @@ def _classify_and_file(file_path: str, filename: str, user_context: str,
             )
         ui.log(f"✅ Filed → {category}", "success")
         ui.increment_stat("filed")
+
+        # R2 sync — upload screenshot + summary in background
+        if settings.get('R2_SYNC', 'false').lower() == 'true':
+            worker_url = settings.get('API_KEY_CLOUDFLARE', '')
+            if worker_url:
+                from app.r2_sync import upload_file
+                upload_file(worker_url, new_path, f"{category}/{filename}")
+                upload_file(worker_url, f"{new_path}.txt", f"{category}/{filename}.txt")
+                ui.log(f"☁  Synced to R2: {category}/{filename}", "info")
     else:
         ui.log(f"⚠️  Low-context item held in: {category}", "warn")
 

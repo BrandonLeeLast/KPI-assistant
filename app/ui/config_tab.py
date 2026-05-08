@@ -485,6 +485,70 @@ def build(parent: ctk.CTkFrame, app) -> None:
     hint("Classified screenshots are organised into subfolders here.")
     folder_row(app.evidence_folder_var)
 
+    # R2 sync/restore buttons
+    r2_actions = ctk.CTkFrame(scroll, fg_color="transparent")
+    r2_actions.pack(fill="x", pady=(4, 2))
+
+    def _get_cf_url():
+        url = app._provider_keys.get("Cloudflare", "").split("|")[0].strip()
+        return url
+
+    def _r2_sync():
+        import threading
+        url = _get_cf_url()
+        if not url:
+            import tkinter.messagebox as mb
+            mb.showwarning("No Worker URL", "Set your Cloudflare Worker URL first.")
+            return
+        app.log("☁  Syncing evidence to R2...", "info")
+        def _run():
+            from app.r2_sync import sync_evidence_folder
+            uploaded, skipped = sync_evidence_folder(
+                url, app.evidence_folder_var.get(), app.log_message
+            )
+            app.log(f"☁  Sync complete — {uploaded} uploaded, {skipped} already in R2.", "success")
+        threading.Thread(target=_run, daemon=True).start()
+
+    def _r2_restore():
+        import threading
+        url = _get_cf_url()
+        if not url:
+            import tkinter.messagebox as mb
+            mb.showwarning("No Worker URL", "Set your Cloudflare Worker URL first.")
+            return
+        app.log("☁  Restoring from R2...", "info")
+        def _run():
+            from app.r2_sync import restore_from_r2
+            downloaded, skipped = restore_from_r2(
+                url, app.evidence_folder_var.get(), app.log_message
+            )
+            app.log(f"☁  Restore complete — {downloaded} downloaded, {skipped} already local.", "success")
+        threading.Thread(target=_run, daemon=True).start()
+
+    btn_sync = ctk.CTkButton(
+        r2_actions, text="☁  Sync to R2",
+        fg_color=TEAL, hover_color="#78c9bf", text_color=HEADER_BG,
+        font=ctk.CTkFont("Segoe UI", 10, weight="bold"), corner_radius=8, height=30,
+        command=_r2_sync,
+    )
+    btn_sync.pack(side="left", padx=(0, 8))
+
+    btn_restore = ctk.CTkButton(
+        r2_actions, text="↓  Restore from R2",
+        fg_color=SURFACE2, hover_color="#585b70", text_color=TEXT,
+        font=ctk.CTkFont("Segoe UI", 10), corner_radius=8, height=30,
+        command=_r2_restore,
+    )
+    btn_restore.pack(side="left")
+
+    def _update_r2_buttons(*_):
+        state = "normal" if app.provider_var.get() == "Cloudflare" else "disabled"
+        btn_sync.configure(state=state)
+        btn_restore.configure(state=state)
+
+    app.provider_var.trace_add("write", _update_r2_buttons)
+    scroll.after(80, _update_r2_buttons)
+
     divider()
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -602,6 +666,11 @@ def build(parent: ctk.CTkFrame, app) -> None:
         "Delete screenshot after processing",
         app.delete_after_process_var, RED,
         "When on: original screenshot is deleted from the watch folder after it's been filed.",
+    )
+    toggle_row2(
+        "Sync evidence to Cloudflare R2",
+        app.r2_sync_var, TEAL,
+        "Auto-upload each filed screenshot + summary to your R2 bucket. Requires Cloudflare provider.",
     )
 
     ctk.CTkLabel(scroll, text="KPA Categories (comma-separated)", text_color=SUBTEXT,

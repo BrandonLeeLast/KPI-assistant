@@ -59,7 +59,8 @@ a = Analysis(
         'packaging',
         'packaging.version',
         'app.worker_deploy',
-        'app.ui.worker_wizard'
+        'app.ui.worker_wizard',
+        'app.r2_sync',
 
     ],
     hookspath=[],

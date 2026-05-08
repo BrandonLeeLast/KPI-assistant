@@ -76,6 +76,7 @@ class KPIDashboardApp(ctk.CTk):
         self.auto_process_var         = tk.BooleanVar(value=d.get('AUTO_PROCESS',          'true')  == 'true')
         self.show_context_var         = tk.BooleanVar(value=d.get('SHOW_CONTEXT',          'true')  == 'true')
         self.delete_after_process_var = tk.BooleanVar(value=d.get('DELETE_AFTER_PROCESS',  'false') == 'true')
+        self.r2_sync_var              = tk.BooleanVar(value=d.get('R2_SYNC',               'false') == 'true')
         self.kpa_categories_var       = tk.StringVar(value=d.get('KPA_CATEGORIES', ''))
         self.context_prompt_var       = tk.StringVar(value=d.get('CONTEXT_PROMPT',  ''))
 
@@ -368,6 +369,7 @@ class KPIDashboardApp(ctk.CTk):
         d['AUTO_PROCESS']         = str(self.auto_process_var.get()).lower()
         d['SHOW_CONTEXT']         = str(self.show_context_var.get()).lower()
         d['DELETE_AFTER_PROCESS'] = str(self.delete_after_process_var.get()).lower()
+        d['R2_SYNC']              = str(self.r2_sync_var.get()).lower()
         d['KPA_CATEGORIES']       = self.kpa_categories_var.get()
         d['CONTEXT_PROMPT']    = self.context_prompt_var.get()
         # Notifications

@@ -297,6 +297,18 @@ def _deploy_worker(on_log, on_done, on_error) -> None:
         return
     log("✅ Cloudflare login successful.")
 
+    # ── Step 5.5: Create R2 bucket ────────────────────────────────────────────
+    log("🪣 Creating R2 storage bucket...")
+    code, out, err = _run(
+        [npx_exe, "wrangler", "r2", "bucket", "create", "kpi-evidence"],
+        cwd=worker_root, timeout=30
+    )
+    combined = (out + err).lower()
+    if code != 0 and "already exists" not in combined:
+        log(f"⚠️  R2 bucket creation failed: {err or out} — continuing anyway")
+    else:
+        log("✅ R2 bucket ready.")
+
     # ── Step 6: Deploy ────────────────────────────────────────────────────────
     log("🚀 Deploying worker to Cloudflare...")
     log("   (A console window will stay open during upload)")
