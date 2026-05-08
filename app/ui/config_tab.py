@@ -447,6 +447,39 @@ def build(parent: ctk.CTkFrame, app) -> None:
     hint("Auto-picked up and processed when a new image lands here.")
     folder_row(app.watch_folder_var)
 
+    # Watch folder actions
+    watch_actions = ctk.CTkFrame(scroll, fg_color="transparent")
+    watch_actions.pack(fill="x", pady=(4, 2))
+
+    def _clear_watch_folder():
+        import tkinter.messagebox as mb
+        import os
+        folder = app.watch_folder_var.get()
+        if not folder or not os.path.exists(folder):
+            mb.showwarning("Not Found", "Watch folder does not exist.")
+            return
+        files = [f for f in os.listdir(folder)
+                 if os.path.isfile(os.path.join(folder, f))
+                 and f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        if not files:
+            mb.showinfo("Empty", "No screenshots in watch folder.")
+            return
+        if mb.askyesno("Clear Watch Folder",
+                       f"Delete {len(files)} screenshot(s) from:\n{folder}\n\nThis cannot be undone."):
+            for f in files:
+                try:
+                    os.remove(os.path.join(folder, f))
+                except Exception:
+                    pass
+            app.log(f"🗑  Cleared {len(files)} file(s) from watch folder.", "warn")
+
+    ctk.CTkButton(
+        watch_actions, text="🗑  Clear Watch Folder",
+        fg_color=SURFACE2, hover_color=RED, text_color=TEXT,
+        font=ctk.CTkFont("Segoe UI", 10), corner_radius=8, height=30,
+        command=_clear_watch_folder,
+    ).pack(side="left")
+
     ctk.CTkLabel(scroll, text="KPI Evidence Folder", text_color=SUBTEXT,
                  font=ctk.CTkFont("Segoe UI", 10), anchor="w").pack(fill="x", pady=(4, 0))
     hint("Classified screenshots are organised into subfolders here.")
@@ -564,6 +597,11 @@ def build(parent: ctk.CTkFrame, app) -> None:
         "Show context window",
         app.show_context_var, MAUVE,
         "When off: screenshots are sent straight to AI with no prompt — zero friction mode.",
+    )
+    toggle_row2(
+        "Delete screenshot after processing",
+        app.delete_after_process_var, RED,
+        "When on: original screenshot is deleted from the watch folder after it's been filed.",
     )
 
     ctk.CTkLabel(scroll, text="KPA Categories (comma-separated)", text_color=SUBTEXT,

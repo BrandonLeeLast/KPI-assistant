@@ -53,6 +53,13 @@ def process_file(file_path: str, settings, ui) -> None:
         category = _classify_and_file(file_path, filename, user_context, settings, ui)
         mark_as_processed(filename, log_file, category)
 
+        if settings.get('DELETE_AFTER_PROCESS', 'false').lower() == 'true':
+            try:
+                os.remove(file_path)
+                ui.log(f"🗑  Deleted original: {filename}", "info")
+            except Exception as e:
+                ui.log(f"⚠️  Could not delete {filename}: {e}", "warn")
+
         notify_success = settings.get('NOTIFY_ON_SUCCESS', 'false').lower() == 'true'
         if notify_success:
             ui.notify(f"Filed under: {category}", "KPEye")

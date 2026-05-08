@@ -73,10 +73,11 @@ class KPIDashboardApp(ctk.CTk):
         self.capture_format_var  = tk.StringVar(value=d.get('CAPTURE_FORMAT',  'PNG'))
 
         # ── Processing ────────────────────────────────────────────────────────
-        self.auto_process_var    = tk.BooleanVar(value=d.get('AUTO_PROCESS',    'true')  == 'true')
-        self.show_context_var    = tk.BooleanVar(value=d.get('SHOW_CONTEXT',    'true')  == 'true')
-        self.kpa_categories_var  = tk.StringVar(value=d.get('KPA_CATEGORIES', ''))
-        self.context_prompt_var  = tk.StringVar(value=d.get('CONTEXT_PROMPT',  ''))
+        self.auto_process_var         = tk.BooleanVar(value=d.get('AUTO_PROCESS',          'true')  == 'true')
+        self.show_context_var         = tk.BooleanVar(value=d.get('SHOW_CONTEXT',          'true')  == 'true')
+        self.delete_after_process_var = tk.BooleanVar(value=d.get('DELETE_AFTER_PROCESS',  'false') == 'true')
+        self.kpa_categories_var       = tk.StringVar(value=d.get('KPA_CATEGORIES', ''))
+        self.context_prompt_var       = tk.StringVar(value=d.get('CONTEXT_PROMPT',  ''))
 
         # ── Notifications ─────────────────────────────────────────────────────
         self.notify_success_var  = tk.BooleanVar(value=d.get('NOTIFY_ON_SUCCESS', 'false') == 'true')
@@ -364,9 +365,10 @@ class KPIDashboardApp(ctk.CTk):
         d['HOTKEY']            = self.hotkey_var.get()
         d['CAPTURE_FORMAT']    = self.capture_format_var.get()
         # Processing
-        d['AUTO_PROCESS']      = str(self.auto_process_var.get()).lower()
-        d['SHOW_CONTEXT']      = str(self.show_context_var.get()).lower()
-        d['KPA_CATEGORIES']    = self.kpa_categories_var.get()
+        d['AUTO_PROCESS']         = str(self.auto_process_var.get()).lower()
+        d['SHOW_CONTEXT']         = str(self.show_context_var.get()).lower()
+        d['DELETE_AFTER_PROCESS'] = str(self.delete_after_process_var.get()).lower()
+        d['KPA_CATEGORIES']       = self.kpa_categories_var.get()
         d['CONTEXT_PROMPT']    = self.context_prompt_var.get()
         # Notifications
         d['NOTIFY_ON_SUCCESS'] = str(self.notify_success_var.get()).lower()
