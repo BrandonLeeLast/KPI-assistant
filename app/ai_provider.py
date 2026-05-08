@@ -12,10 +12,24 @@ Adding a new provider:
 
 from __future__ import annotations
 import base64
+import io
 import urllib.request
 import urllib.error
 import json
 from PIL import Image
+
+
+def _img_to_b64(image_path: str, max_px: int = 1024) -> str:
+    """Open image, resize to max_px on longest side, return JPEG base64."""
+    with Image.open(image_path) as raw:
+        img = raw.copy().convert("RGB")
+    w, h = img.size
+    if max(w, h) > max_px:
+        scale = max_px / max(w, h)
+        img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=85)
+    return base64.b64encode(buf.getvalue()).decode()
 
 
 # ── Provider registry ─────────────────────────────────────────────────────────
@@ -236,13 +250,8 @@ def _classify_kpi_worker(image_path: str, instructions: str,
     Auth token is baked into the EXE at build time — user needs no API key.
     """
     from app.secrets import KPI_WORKER_URL, WORKER_TOKEN
-    import io
 
-    with Image.open(image_path) as raw:
-        img = raw.copy().convert("RGB")
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=85)
-    b64 = base64.b64encode(buf.getvalue()).decode()
+    b64 = _img_to_b64(image_path)
 
     payload = json.dumps({
         "image_base64": b64,
@@ -283,8 +292,6 @@ def _classify_custom_url(image_path: str, instructions: str,
       - Just the URL: https://your-worker.workers.dev
       - URL with auth: https://your-worker.workers.dev|your-auth-token
     """
-    import io
-
     # Parse URL and optional auth token from api_key field
     if "|" in api_key:
         url, auth_token = api_key.split("|", 1)
@@ -298,11 +305,7 @@ def _classify_custom_url(image_path: str, instructions: str,
             "Format: https://your-endpoint.com  or  https://your-endpoint.com|auth-token"
         )
 
-    with Image.open(image_path) as raw:
-        img = raw.copy().convert("RGB")
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=85)
-    b64 = base64.b64encode(buf.getvalue()).decode()
+    b64 = _img_to_b64(image_path)
 
     payload = json.dumps({
         "image_base64": b64,
